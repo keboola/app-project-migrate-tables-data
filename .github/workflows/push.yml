@@ -3,7 +3,7 @@ name: 'GitHub Actions'
     - push
 concurrency: 'ci-${{ github.ref }}'
 env:
-    APP_IMAGE: keboola-component
+    APP_IMAGE: app-project-migrate-large-tables
     KBC_DEVELOPERPORTAL_VENDOR: keboola
     KBC_DEVELOPERPORTAL_APP: keboola.app-project-migrate-large-tables
     KBC_DEVELOPERPORTAL_USERNAME: keboola+app_project_migrate_large_tables_github_actions
