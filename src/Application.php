@@ -45,13 +45,14 @@ class Application
     private function migrateTable(string $tableId): void
     {
         try {
-            $fileInfo = $this->getTableFileInfo($tableId);
             $tableInfo = $this->sourceClient->getTable($tableId);
+            $fileInfo = $this->getTableFileInfo($tableId, $tableInfo);
         } catch (SkipTableException $e) {
             return;
         }
 
         $tmp = new Temp();
+/**
         $headerFile = $tmp->createFile(sprintf('%s.header.csv', $tableId));
         $headerFile = new CsvFile($headerFile->getPathname());
         $headerFile->writeRow($tableInfo['columns']);
@@ -64,7 +65,7 @@ class Application
                 'primaryKey' => join(',', $tableInfo['primaryKey']),
             ]
         );
-
+**/
         $fileClient = $this->getFileClient($fileInfo);
         if ($fileInfo['isSliced'] === true) {
             $this->logger->info(sprintf('Downloading table %s', $tableId));
@@ -110,10 +111,8 @@ class Application
         }
     }
 
-    protected function getTableFileInfo(string $tableId): array
+    protected function getTableFileInfo(string $tableId, array $table): array
     {
-        $table = $this->sourceClient->getTable($tableId);
-
         if ($table['bucket']['stage'] === 'sys') {
             $this->logger->warning(sprintf('Skipping table %s (sys bucket)', $table['id']));
             throw new SkipTableException();
