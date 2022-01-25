@@ -4,7 +4,8 @@
     "license": "MIT",
     "require": {
         "php": "^7.4",
-        "keboola/php-component": "^8.1"
+        "keboola/php-component": "^8.1",
+        "keboola/storage-api-client": "^12.9"
     },
     "require-dev": {
         "php-parallel-lint/php-parallel-lint": "^1.2",
@@ -17,13 +18,13 @@
     },
     "autoload": {
         "psr-4": {
-            "MyComponent\\": "src/"
+            "AppProjectMigrateLargeTables\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "MyComponent\\Tests\\": "tests/phpunit/",
-            "MyComponent\\FunctionalTests\\": "tests/functional/"
+            "AppProjectMigrateLargeTables\\Tests\\": "tests/phpunit/",
+            "AppProjectMigrateLargeTables\\FunctionalTests\\": "tests/functional/"
         }
     },
     "scripts": {
@@ -51,6 +52,9 @@
     },
     "config": {
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "dealerdirect/phpcodesniffer-composer-installer": true
+        }
     }
 }

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace MyComponent;
+namespace AppProjectMigrateLargeTables;
 
 use Keboola\Component\Config\BaseConfig;
 
