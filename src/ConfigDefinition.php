@@ -16,9 +16,9 @@ class ConfigDefinition extends BaseConfigDefinition
         /** @noinspection NullPointerExceptionInspection */
         $parametersNode
             ->children()
-                ->scalarNode('foo')
-                    ->defaultValue('baz')
-                ->end()
+                ->scalarNode('sourceKbcUrl')->isRequired()->cannotBeEmpty()->end()
+                ->scalarNode('#sourceKbcToken')->isRequired()->cannotBeEmpty()->end()
+                ->arrayNode('tables')->prototype('scalar')->isRequired()->end()
             ->end()
         ;
         // @formatter:on

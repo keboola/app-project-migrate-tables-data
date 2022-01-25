@@ -8,9 +8,18 @@ use Keboola\Component\Config\BaseConfig;
 
 class Config extends BaseConfig
 {
-    // @todo implement your custom getters
-    public function getFoo(): string
+    public function getSourceKbcUrl(): string
     {
-        return $this->getValue(['parameters', 'foo']);
+        return $this->getValue(['parameters', 'sourceKbcUrl']);
+    }
+
+    public function getSourceKbcToken(): string
+    {
+        return $this->getValue(['parameters', '#sourceKbcToken']);
+    }
+
+    public function getMigrateTables(): array
+    {
+        return $this->getValue(['parameters', 'tables']);
     }
 }
