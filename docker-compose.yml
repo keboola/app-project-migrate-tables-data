@@ -5,3 +5,10 @@ services:
     volumes:
       - ./:/code
       - ./data:/data
+    environment:
+      - KBC_URL
+      - KBC_TOKEN
+      - SOURCE_CLIENT_URL
+      - SOURCE_CLIENT_TOKEN
+      - DESTINATION_CLIENT_URL
+      - DESTINATION_CLIENT_TOKEN
