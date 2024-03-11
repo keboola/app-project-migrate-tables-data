@@ -105,11 +105,14 @@ class Application
             $bucketTables = $this->destinationClient->listTables($bucket['id']);
 
             // migrate only empty tables
-            $filteredBucketTables = array_filter($bucketTables, fn($v) => $v['rowsCount'] === 0);
+            $filteredBucketTables = array_filter(
+                $bucketTables,
+                fn($v) => $v['rowsCount'] === 0 || is_null($v['rowsCount']),
+            );
 
             $listTables = array_merge(
                 array_map(fn($v) => $v['id'], $filteredBucketTables),
-                $listTables
+                $listTables,
             );
         }
         return $listTables;

@@ -5,7 +5,7 @@
     "require": {
         "php": "^7.4",
         "keboola/php-component": "^8.1",
-        "keboola/storage-api-client": "^12.9"
+        "keboola/storage-api-client": "^14.16"
     },
     "require-dev": {
         "keboola/coding-standard": ">=7.0.2",
