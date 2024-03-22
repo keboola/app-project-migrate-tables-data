@@ -3,8 +3,9 @@
     "description": "MyComponent description",
     "license": "MIT",
     "require": {
-        "php": "^7.4",
-        "keboola/php-component": "^8.1",
+        "php": "^8.2",
+        "keboola/db-adapter-snowflake": "^1.4",
+        "keboola/php-component": "^9.4",
         "keboola/storage-api-client": "^14.16"
     },
     "require-dev": {
@@ -13,20 +14,20 @@
         "keboola/datadir-tests": "^5.2",
         "keboola/php-temp": "^2.0",
         "php-parallel-lint/php-parallel-lint": "^1.2",
-        "phpstan/phpstan": "^0.12.14",
+        "phpstan/phpstan": "^1.10",
         "phpunit/phpunit": "^9.0",
         "symfony/finder": "^5.4",
         "symfony/process": "^5.0"
     },
     "autoload": {
         "psr-4": {
-            "AppProjectMigrateLargeTables\\": "src/"
+            "Keboola\\AppProjectMigrateLargeTables\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "AppProjectMigrateLargeTables\\Tests\\": "tests/phpunit/",
-            "AppProjectMigrateLargeTables\\FunctionalTests\\": "tests/functional/"
+            "Keboola\\AppProjectMigrateLargeTables\\Tests\\": "tests/phpunit/",
+            "Keboola\\AppProjectMigrateLargeTables\\FunctionalTests\\": "tests/functional/"
         }
     },
     "scripts": {
