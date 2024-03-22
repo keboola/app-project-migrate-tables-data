@@ -2,39 +2,35 @@
 
 declare(strict_types=1);
 
-namespace AppProjectMigrateLargeTables;
+namespace Keboola\AppProjectMigrateLargeTables\Strategy;
 
+use Keboola\AppProjectMigrateLargeTables\Config;
+use Keboola\AppProjectMigrateLargeTables\MigrateInterface;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
 use Keboola\Temp\Temp;
 use Psr\Log\LoggerInterface;
 
-class Application
+class SapiMigrate implements MigrateInterface
 {
-    private Client $sourceClient;
-
-    private Client $destinationClient;
-
-    private LoggerInterface $logger;
-
-    public function __construct(Client $sourceClient, Client $destinationClient, LoggerInterface $logger)
-    {
-        $this->sourceClient = $sourceClient;
-        $this->destinationClient = $destinationClient;
-        $this->logger = $logger;
+    public function __construct(
+        private readonly Client $sourceClient,
+        private readonly Client $targetClient,
+        private readonly LoggerInterface $logger,
+    ) {
     }
 
-    public function run(array $tables = []): void
+    public function migrate(Config $config): void
     {
-        foreach ($tables ?: $this->getAllTables() as $tableId) {
+        foreach ($config->getMigrateTables() ?: $this->getAllTables() as $tableId) {
             try {
                 $tableInfo = $this->sourceClient->getTable($tableId);
             } catch (ClientException $e) {
                 $this->logger->warning(sprintf(
                     'Skipping migration Table ID "%s". Reason: "%s".',
                     $tableId,
-                    $e->getMessage()
+                    $e->getMessage(),
                 ));
                 continue;
             }
@@ -75,7 +71,7 @@ class Application
             $slices = $this->sourceClient->downloadSlicedFile($sourceFileId, $tmp->getTmpFolder());
 
             $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
-            $destinationFileId = $this->destinationClient->uploadSlicedFile($slices, $optionUploadedFile);
+            $destinationFileId = $this->targetClient->uploadSlicedFile($slices, $optionUploadedFile);
         } else {
             $fileName = $tmp->getTmpFolder() . '/' . $sourceFileInfo['name'];
 
@@ -83,26 +79,26 @@ class Application
             $this->sourceClient->downloadFile($sourceFileId, $fileName);
 
             $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
-            $destinationFileId = $this->destinationClient->uploadFile($fileName, $optionUploadedFile);
+            $destinationFileId = $this->targetClient->uploadFile($fileName, $optionUploadedFile);
         }
 
         // Upload data to table
-        $this->destinationClient->writeTableAsyncDirect(
+        $this->targetClient->writeTableAsyncDirect(
             $sourceTableInfo['id'],
             [
                 'name' => $sourceTableInfo['name'],
                 'dataFileId' => $destinationFileId,
                 'columns' => $sourceTableInfo['columns'],
-            ]
+            ],
         );
     }
 
     private function getAllTables(): array
     {
-        $buckets = $this->destinationClient->listBuckets();
+        $buckets = $this->targetClient->listBuckets();
         $listTables = [];
         foreach ($buckets as $bucket) {
-            $bucketTables = $this->destinationClient->listTables($bucket['id']);
+            $bucketTables = $this->targetClient->listTables($bucket['id']);
 
             // migrate only empty tables
             $filteredBucketTables = array_filter(

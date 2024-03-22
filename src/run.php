@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-use AppProjectMigrateLargeTables\Component;
+use Keboola\AppProjectMigrateLargeTables\Component;
 use Keboola\Component\Logger;
 use Keboola\Component\UserException;
 
@@ -25,7 +25,7 @@ try {
             'errCode' => $e->getCode(),
             'errTrace' => $e->getTraceAsString(),
             'errPrevious' => is_object($e->getPrevious()) ? get_class($e->getPrevious()) : '',
-        ]
+        ],
     );
     exit(2);
 }
