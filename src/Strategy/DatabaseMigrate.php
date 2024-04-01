@@ -16,93 +16,50 @@ use Throwable;
 
 class DatabaseMigrate implements MigrateInterface
 {
+    private const SKIP_CLONE_SCHEMAS = [
+        'INFORMATION_SCHEMA',
+        'PUBLIC',
+    ];
 
     public function __construct(
-        private readonly Connection $sourceConnection,
-        private readonly Connection $targetConnection,
-        private readonly Client $targetSapiClient,
         private readonly LoggerInterface $logger,
+        private readonly string $replicaDatabase,
+        private readonly Connection $targetConnection,
+        private readonly string $targetDatabase,
+        private readonly Client $targetSapiClient,
     ) {
     }
 
     public function migrate(Config $config): void
     {
-        $this->createReplication(
-            $config->getSourceDatabase(),
-            $config->getTargetDatabase(),
-            $config->getTargetWarehouse(),
-        );
+        $this->refreshReplicaDatabase($config);
 
         $databaseRole = $this->getSourceRole(
             $this->targetConnection,
             'DATABASE',
-            QueryBuilder::quoteIdentifier($config->getTargetDatabase()),
+            QueryBuilder::quoteIdentifier($this->targetDatabase),
         );
         $this->targetConnection->grantRoleToMigrateUser($databaseRole);
         $this->targetConnection->useRole($databaseRole);
 
         $this->targetConnection->query(sprintf(
             'USE DATABASE %s;',
-            QueryBuilder::quoteIdentifier($config->getTargetDatabase()),
+            QueryBuilder::quoteIdentifier($this->targetDatabase),
         ));
         $schemas = $this->targetConnection->fetchAll(sprintf(
             'SHOW SCHEMAS IN DATABASE %s;',
-            QueryBuilder::quoteIdentifier($config->getTargetDatabase()),
+            QueryBuilder::quoteIdentifier($this->targetDatabase),
         ));
 
         foreach ($schemas as $schema) {
-            $this->migrateSchema($config->getMigrateTables(), $config->getTargetDatabase(), $schema['name']);
+            if (in_array($schema['name'], self::SKIP_CLONE_SCHEMAS, true)) {
+                continue;
+            }
+            $this->migrateSchema($config->getMigrateTables(), $schema['name']);
         }
     }
 
-    private function createReplication(string $sourceDatabase, string $targetDatabase, string $targetWarehouse): void
-    {
-        $replicaDatabase = $targetDatabase . '_REPLICA';
-
-        // Allow replication on source database
-        $this->logger->info(sprintf('Enabling replication on database %s', $sourceDatabase));
-        $this->sourceConnection->query(sprintf(
-            'ALTER DATABASE %s ENABLE REPLICATION TO ACCOUNTS %s.%s;',
-            QueryBuilder::quoteIdentifier($sourceDatabase),
-            $this->targetConnection->getRegion(),
-            $this->targetConnection->getAccount(),
-        ));
-
-        // Waiting for previous SQL query
-        sleep(5);
-
-        // Migration database sqls
-        $this->logger->info(sprintf('Creating replica database %s', $replicaDatabase));
-        $this->targetConnection->query(sprintf(
-            'CREATE DATABASE IF NOT EXISTS %s AS REPLICA OF %s.%s.%s;',
-            QueryBuilder::quoteIdentifier($replicaDatabase),
-            $this->sourceConnection->getRegion(),
-            $this->sourceConnection->getAccount(),
-            QueryBuilder::quoteIdentifier($sourceDatabase),
-        ));
-
-        $this->targetConnection->query(sprintf(
-            'USE DATABASE %s',
-            QueryBuilder::quoteIdentifier($replicaDatabase),
-        ));
-        $this->targetConnection->query('USE SCHEMA PUBLIC');
-
-        $this->targetConnection->query(sprintf(
-            'USE WAREHOUSE %s',
-            QueryBuilder::quoteIdentifier($targetWarehouse),
-        ));
-
-        // Run replicate of data
-        $this->logger->info(sprintf('Refreshing replica database %s', $replicaDatabase));
-        $this->targetConnection->query(sprintf(
-            'ALTER DATABASE %s REFRESH',
-            QueryBuilder::quoteIdentifier($replicaDatabase),
-        ));
-
-        $this->logger->info(sprintf('Replica database %s created', $replicaDatabase));
-    }
-
-    private function migrateSchema(array $tablesWhiteList, string $database, string $schemaName): void
+    private function migrateSchema(array $tablesWhiteList, string $schemaName): void
     {
         $this->logger->info(sprintf('Migrating schema %s', $schemaName));
         $tables = $this->targetConnection->fetchAll(sprintf(
@@ -115,11 +72,11 @@ class DatabaseMigrate implements MigrateInterface
             if ($tablesWhiteList && !in_array($tableId, $tablesWhiteList, true)) {
                 continue;
             }
-            $this->migrateTable($database, $schemaName, $table['name']);
+            $this->migrateTable($schemaName, $table['name']);
         }
     }
 
-    private function migrateTable(string $database, string $schemaName, string $tableName): void
+    private function migrateTable(string $schemaName, string $tableName): void
     {
         $this->logger->info(sprintf('Migrating table %s.%s', $schemaName, $tableName));
         $tableRole = $this->getSourceRole(
@@ -135,26 +92,29 @@ class DatabaseMigrate implements MigrateInterface
             $this->targetConnection->useRole($tableRole);
         }
 
-        $this->targetConnection->grantPrivilegesToReplicaDatabase($tableRole);
+        $this->targetConnection->grantPrivilegesToReplicaDatabase(
+            $this->replicaDatabase,
+            $tableRole,
+        );
 
         $columns = $this->targetConnection->getTableColumns($schemaName, $tableName);
 
         try {
             $this->targetConnection->query(sprintf(
                 'TRUNCATE TABLE %s.%s.%s;',
-                QueryBuilder::quoteIdentifier($database),
+                QueryBuilder::quoteIdentifier($this->targetDatabase),
                 QueryBuilder::quoteIdentifier($schemaName),
                 QueryBuilder::quoteIdentifier($tableName),
             ));
 
             $this->targetConnection->query(sprintf(
                 'INSERT INTO %s.%s.%s (%s) SELECT %s FROM %s.%s.%s;',
-                QueryBuilder::quoteIdentifier($database),
+                QueryBuilder::quoteIdentifier($this->targetDatabase),
                 QueryBuilder::quoteIdentifier($schemaName),
                 QueryBuilder::quoteIdentifier($tableName),
                 implode(', ', array_map(fn($v) => QueryBuilder::quoteIdentifier($v), $columns)),
                 implode(', ', array_map(fn($v) => QueryBuilder::quoteIdentifier($v), $columns)),
-                QueryBuilder::quoteIdentifier($database . '_REPLICA'),
+                QueryBuilder::quoteIdentifier($this->replicaDatabase),
                 QueryBuilder::quoteIdentifier($schemaName),
                 QueryBuilder::quoteIdentifier($tableName),
             ));
@@ -197,5 +157,29 @@ class DatabaseMigrate implements MigrateInterface
         $csv = new CsvFile('/tmp/tempDataFile.csv');
         $csv->writeRow($columns);
         return $csv;
+    }
+
+    private function refreshReplicaDatabase(Config $config): void
+    {
+        $currentRole = $this->targetConnection->getCurrentRole();
+        $this->targetConnection->useRole('ACCOUNTADMIN');
+        $this->targetConnection->query(sprintf(
+            'USE DATABASE %s',
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
+        ));
+        $this->targetConnection->query('USE SCHEMA PUBLIC');
+
+        $this->targetConnection->query(sprintf(
+            'USE WAREHOUSE %s',
+            QueryBuilder::quoteIdentifier($config->getTargetWarehouse()),
+        ));
+
+        // Run replicate of data
+        $this->logger->info(sprintf('Refreshing replica database %s', $this->replicaDatabase));
+        $this->targetConnection->query(sprintf(
+            'ALTER DATABASE %s REFRESH',
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
+        ));
+        $this->targetConnection->useRole($currentRole);
     }
 }

@@ -15,12 +15,9 @@ class Connection extends AdapterConnection
 
     private string $user;
 
-    private string $database;
-
     public function __construct(array $options)
     {
         $this->user = $options['user'];
-        $this->database = $options['database'];
         parent::__construct($options);
         $this->useRole('ACCOUNTADMIN');
     }
@@ -63,25 +60,25 @@ class Connection extends AdapterConnection
         $this->useRole($previousRole);
     }
 
-    public function grantPrivilegesToReplicaDatabase(string $tableRole): void
+    public function grantPrivilegesToReplicaDatabase(string $replicaDatabase, string $tableRole): void
     {
         $previousRole = $this->getCurrentRole();
         $this->useRole('ACCOUNTADMIN');
         $this->query(sprintf(
             'GRANT USAGE ON DATABASE %s TO ROLE %s;',
-            QueryBuilder::quoteIdentifier($this->database . '_REPLICA'),
+            QueryBuilder::quoteIdentifier($replicaDatabase),
             QueryBuilder::quoteIdentifier($tableRole),
         ));
 
         $this->query(sprintf(
             'GRANT USAGE ON ALL SCHEMAS IN DATABASE %s TO ROLE %s;',
-            QueryBuilder::quoteIdentifier($this->database . '_REPLICA'),
+            QueryBuilder::quoteIdentifier($replicaDatabase),
             QueryBuilder::quoteIdentifier($tableRole),
         ));
 
         $this->query(sprintf(
             'GRANT SELECT ON ALL TABLES IN DATABASE %s TO ROLE %s;',
-            QueryBuilder::quoteIdentifier($this->database . '_REPLICA'),
+            QueryBuilder::quoteIdentifier($replicaDatabase),
             QueryBuilder::quoteIdentifier($tableRole),
         ));
 
