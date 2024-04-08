@@ -9,6 +9,7 @@
         "keboola/storage-api-client": "^14.16"
     },
     "require-dev": {
+        "cweagans/composer-patches": "^1.7",
         "keboola/coding-standard": ">=7.0.2",
         "keboola/csv": "^1.1",
         "keboola/datadir-tests": "^5.2",
@@ -57,7 +58,15 @@
         "sort-packages": true,
         "optimize-autoloader": true,
         "allow-plugins": {
-            "dealerdirect/phpcodesniffer-composer-installer": true
+            "dealerdirect/phpcodesniffer-composer-installer": true,
+            "cweagans/composer-patches": true
+        }
+    },
+    "extra": {
+        "patches": {
+            "microsoft/azure-storage-common": [
+                "patches/microsoft-azure-storage-common-src-common-internal-servicerestproxy-php.patch"
+            ]
         }
     }
 }
