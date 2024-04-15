@@ -8,26 +8,36 @@ use Keboola\Component\Config\BaseConfig;
 
 class Config extends BaseConfig
 {
-    private const DATABASE_PREFIXES = [
+    private const STACK_DATABASES = [
         'connection.keboola.com' => [
             'db_replica_prefix' => 'AWSUS',
             'db_prefix' => 'SAPI',
+            'account' => 'KEBOOLA',
+            'region' => 'AWS_US_WEST_2',
         ],
         'connection.eu-central-1.keboola.com' => [
             'db_replica_prefix' => 'AWSEU',
             'db_prefix' => 'KEBOOLA',
+            'account' => 'KEBOOLA',
+            'region' => 'AWS_EU_CENTRAL_1',
         ],
         'connection.north-europe.azure.keboola.com' => [
             'db_replica_prefix' => 'AZNE',
             'db_prefix' => 'KEBOOLA',
+            'account' => 'KEBOOLA',
+            'region' => 'AZURE_WESTEUROPE',
         ],
         'connection.europe-west3.gcp.keboola.com' => [
             'db_replica_prefix' => 'GCPEUW3',
             'db_prefix' => 'KBC_EUW3',
+            'account' => 'IK34405',
+            'region' => 'GCP_EUROPE_WEST4',
         ],
         'connection.us-east4.gcp.keboola.com' => [
             'db_replica_prefix' => 'GCPUSE4',
             'db_prefix' => 'KBC_USE4',
+            'account' => 'NE35810',
+            'region' => 'GCP_US_EAST4',
         ],
     ];
 
@@ -71,12 +81,28 @@ class Config extends BaseConfig
         return $this->getImageParameters()['db']['warehouse'];
     }
 
+    public function getSourceDatabaseAccount(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['account'];
+    }
+
+    public function getSourceDatabaseRegion(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['region'];
+    }
+
     public function getSourceDatabasePrefix(): string
     {
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
-        return self::DATABASE_PREFIXES[$url['host']]['db_prefix'];
+        return self::STACK_DATABASES[$url['host']]['db_prefix'];
     }
 
     public function getReplicaDatabasePrefix(): string
@@ -84,7 +110,7 @@ class Config extends BaseConfig
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
-        return self::DATABASE_PREFIXES[$url['host']]['db_replica_prefix'];
+        return self::STACK_DATABASES[$url['host']]['db_replica_prefix'];
     }
 
     public function getTargetDatabasePrefix(): string
@@ -92,7 +118,7 @@ class Config extends BaseConfig
         $url = parse_url($this->getEnvKbcUrl());
         assert($url && array_key_exists('host', $url));
 
-        return self::DATABASE_PREFIXES[$url['host']]['db_prefix'];
+        return self::STACK_DATABASES[$url['host']]['db_prefix'];
     }
 
     public function getSourceHost(): string

@@ -29,16 +29,12 @@ class DatabaseReplication
             if (!in_array($sourceDatabase, $databases, true)) {
                 continue;
             }
-            $replicaDatabase = sprintf('%s_%s', $config->getReplicaDatabasePrefix(), $i) . '_REPLICA';
-            $this->createReplication($sourceDatabase, $replicaDatabase);
+            $this->createReplication($sourceDatabase);
         }
     }
 
-    public function createReplication(
-        string $sourceDatabase,
-        string $replicaDatabase,
-    ): void {
-
+    public function createReplication(string $sourceDatabase): void
+    {
         // Allow replication on source database
         $this->logger->info(sprintf('Enabling replication on database %s', $sourceDatabase));
 
@@ -48,20 +44,5 @@ class DatabaseReplication
             $this->targetConnection->getRegion(),
             $this->targetConnection->getAccount(),
         ));
-
-        // Waiting for previous SQL query
-        sleep(5);
-
-        // Migration database sqls
-        $this->logger->info(sprintf('Creating replica database %s', $replicaDatabase));
-        $this->targetConnection->query(sprintf(
-            'CREATE DATABASE IF NOT EXISTS %s AS REPLICA OF %s.%s.%s;',
-            QueryBuilder::quoteIdentifier($replicaDatabase),
-            $this->sourceConnection->getRegion(),
-            $this->sourceConnection->getAccount(),
-            QueryBuilder::quoteIdentifier($sourceDatabase),
-        ));
-
-        $this->logger->info(sprintf('Replica database %s created', $replicaDatabase));
     }
 }

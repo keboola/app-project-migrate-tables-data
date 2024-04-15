@@ -11,8 +11,6 @@ use Keboola\AppProjectMigrateLargeTables\Strategy\DatabaseMigrate;
 use Keboola\AppProjectMigrateLargeTables\Strategy\DatabaseReplication;
 use Keboola\AppProjectMigrateLargeTables\Strategy\SapiMigrate;
 use Keboola\Component\BaseComponent;
-use Keboola\Component\Logger\AsyncActionLogging;
-use Keboola\Component\Logger\SyncActionLogging;
 use Keboola\Component\UserException;
 use Keboola\StorageApi\Client;
 
@@ -38,10 +36,18 @@ class Component extends BaseComponent
                 );
                 break;
             case 'database':
+                $verifyToken = $sourceSapiClient->verifyToken();
+
+                $sourceDatabase = sprintf(
+                    '%s_%s',
+                    $this->getConfig()->getSourceDatabasePrefix(),
+                    $verifyToken['owner']['id'],
+                );
+
                 $replicaDatabase = sprintf(
                     '%s_%s_REPLICA',
                     $this->getConfig()->getReplicaDatabasePrefix(),
-                    $sourceSapiClient->verifyToken()['owner']['id'],
+                    $verifyToken['owner']['id'],
                 );
                 $targetDatabase = sprintf(
                     '%s_%s',
@@ -58,13 +64,12 @@ class Component extends BaseComponent
 
                 $strategy = new DatabaseMigrate(
                     $this->getLogger(),
-                    $replicaDatabase,
                     $targetConnection,
-                    $targetDatabase,
                     $targetSapiClient,
+                    $sourceDatabase,
+                    $replicaDatabase,
+                    $targetDatabase,
                 );
-//                $strategy->createReplications($sourceConnection, $this->getConfig(), 3000, 5000);
-//                exit();
                 break;
             default:
                 throw new UserException(sprintf('Unknown mode "%s"', $this->getConfig()->getMode()));

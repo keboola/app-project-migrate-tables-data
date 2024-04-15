@@ -23,16 +23,21 @@ class DatabaseMigrate implements MigrateInterface
 
     public function __construct(
         private readonly LoggerInterface $logger,
-        private readonly string $replicaDatabase,
         private readonly Connection $targetConnection,
-        private readonly string $targetDatabase,
         private readonly Client $targetSapiClient,
+        private readonly string $sourceDatabase,
+        private readonly string $replicaDatabase,
+        private readonly string $targetDatabase,
     ) {
     }
 
     public function migrate(Config $config): void
     {
+        $currentRole = $this->targetConnection->getCurrentRole();
+        $this->targetConnection->useRole('ACCOUNTADMIN');
+        $this->createReplicaDatabase($config);
         $this->refreshReplicaDatabase($config);
+        $this->targetConnection->useRole($currentRole);
 
         $databaseRole = $this->getSourceRole(
             $this->targetConnection,
@@ -57,6 +62,7 @@ class DatabaseMigrate implements MigrateInterface
             }
             $this->migrateSchema($config->getMigrateTables(), $schema['name']);
         }
+        $this->dropReplicaDatabase();
     }
 
     private function migrateSchema(array $tablesWhiteList, string $schemaName): void
@@ -159,10 +165,23 @@ class DatabaseMigrate implements MigrateInterface
         return $csv;
     }
 
+    private function createReplicaDatabase(Config $config): void
+    {
+        // Migration database sqls
+        $this->logger->info(sprintf('Creating replica database %s', $this->replicaDatabase));
+        $this->targetConnection->query(sprintf(
+            'CREATE DATABASE IF NOT EXISTS %s AS REPLICA OF %s.%s.%s;',
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
+            $config->getSourceDatabaseRegion(),
+            $config->getSourceDatabaseAccount(),
+            QueryBuilder::quoteIdentifier($this->sourceDatabase),
+        ));
+
+        $this->logger->info(sprintf('Replica database %s created', $this->replicaDatabase));
+    }
+
     private function refreshReplicaDatabase(Config $config): void
     {
-        $currentRole = $this->targetConnection->getCurrentRole();
-        $this->targetConnection->useRole('ACCOUNTADMIN');
         $this->targetConnection->query(sprintf(
             'USE DATABASE %s',
             QueryBuilder::quoteIdentifier($this->replicaDatabase),
@@ -180,6 +199,14 @@ class DatabaseMigrate implements MigrateInterface
             'ALTER DATABASE %s REFRESH',
             QueryBuilder::quoteIdentifier($this->replicaDatabase),
         ));
-        $this->targetConnection->useRole($currentRole);
+    }
+
+    private function dropReplicaDatabase(): void
+    {
+        $this->targetConnection->useRole('ACCOUNTADMIN');
+        $this->targetConnection->query(sprintf(
+            'DROP DATABASE %s;',
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
+        ));
     }
 }
