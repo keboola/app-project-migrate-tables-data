@@ -105,6 +105,20 @@ class DatabaseMigrate implements MigrateInterface
 
         $columns = $this->targetConnection->getTableColumns($schemaName, $tableName);
 
+        $compareTimestamp = $this->compareTableMaxTimestamp(
+            'ACCOUNTADMIN',
+            $tableRole,
+            $this->replicaDatabase,
+            $this->targetDatabase,
+            $schemaName,
+            $tableName,
+        );
+
+        if ($compareTimestamp) {
+            $this->logger->info(sprintf('Table %s.%s is up to date', $schemaName, $tableName));
+            return;
+        }
+
         try {
             $this->targetConnection->query(sprintf(
                 'TRUNCATE TABLE %s.%s.%s;',
@@ -208,5 +222,42 @@ class DatabaseMigrate implements MigrateInterface
             'DROP DATABASE %s;',
             QueryBuilder::quoteIdentifier($this->replicaDatabase),
         ));
+    }
+
+    private function compareTableMaxTimestamp(
+        string $firstDatabaseRole,
+        string $secondDatabaseRole,
+        string $firstDatabase,
+        string $secondDatabase,
+        string $schema,
+        string $table,
+    ): bool {
+        $sqlTemplate = 'SELECT max("_timestamp") as "maxTimestamp" FROM %s.%s.%s';
+
+        $currentRole = $this->targetConnection->getCurrentRole();
+        try {
+            $this->targetConnection->useRole($firstDatabaseRole);
+
+            $lastUpdateInFirstDatabase = $this->targetConnection->fetchAll(sprintf(
+                $sqlTemplate,
+                QueryBuilder::quoteIdentifier($firstDatabase),
+                QueryBuilder::quoteIdentifier($schema),
+                QueryBuilder::quoteIdentifier($table),
+            ));
+
+            $this->targetConnection->useRole($secondDatabaseRole);
+            $lastUpdateInSecondDatabase = $this->targetConnection->fetchAll(sprintf(
+                $sqlTemplate,
+                QueryBuilder::quoteIdentifier($secondDatabase),
+                QueryBuilder::quoteIdentifier($schema),
+                QueryBuilder::quoteIdentifier($table),
+            ));
+        } catch (RuntimeException $e) {
+            return false;
+        } finally {
+            $this->targetConnection->useRole($currentRole);
+        }
+
+        return $lastUpdateInFirstDatabase[0]['maxTimestamp'] === $lastUpdateInSecondDatabase[0]['maxTimestamp'];
     }
 }
