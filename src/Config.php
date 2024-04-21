@@ -63,22 +63,22 @@ class Config extends BaseConfig
 
     public function getTargetHost(): string
     {
-        return $this->getImageParameters()['db']['host'];
+        return $this->getDbConfigNode()['host'];
     }
 
     public function getTargetUser(): string
     {
-        return $this->getImageParameters()['db']['username'];
+        return $this->getDbConfigNode()['username'];
     }
 
     public function getTargetPassword(): string
     {
-        return $this->getImageParameters()['db']['#password'];
+        return $this->getDbConfigNode()['#password'];
     }
 
     public function getTargetWarehouse(): string
     {
-        return $this->getImageParameters()['db']['warehouse'];
+        return $this->getDbConfigNode()['warehouse'];
     }
 
     public function getSourceDatabaseAccount(): string
@@ -144,5 +144,14 @@ class Config extends BaseConfig
     public function getProjectIdTo(): int
     {
         return $this->getIntValue(['parameters', 'projectIdTo']);
+    }
+
+    private function getDbConfigNode(): array
+    {
+        $paramDb = $this->getArrayValue(['parameters', 'db'], []);
+        if ($paramDb) {
+            return $paramDb;
+        }
+        return $this->getImageParameters()['db'];
     }
 }

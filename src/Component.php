@@ -12,6 +12,7 @@ use Keboola\AppProjectMigrateLargeTables\Strategy\DatabaseReplication;
 use Keboola\AppProjectMigrateLargeTables\Strategy\SapiMigrate;
 use Keboola\Component\BaseComponent;
 use Keboola\Component\UserException;
+use Keboola\SnowflakeDbAdapter\Exception\SnowflakeDbAdapterException;
 use Keboola\StorageApi\Client;
 
 class Component extends BaseComponent
@@ -55,12 +56,16 @@ class Component extends BaseComponent
                     $targetSapiClient->verifyToken()['owner']['id'],
                 );
 
-                $targetConnection = new Connection([
-                    'host' => $this->getConfig()->getTargetHost(),
-                    'user' => $this->getConfig()->getTargetUser(),
-                    'password' => $this->getConfig()->getTargetPassword(),
-                    'database' => $targetDatabase,
-                ]);
+                try {
+                    $targetConnection = new Connection([
+                        'host' => $this->getConfig()->getTargetHost(),
+                        'user' => $this->getConfig()->getTargetUser(),
+                        'password' => $this->getConfig()->getTargetPassword(),
+                        'database' => $targetDatabase,
+                    ]);
+                } catch (SnowflakeDbAdapterException $e) {
+                    throw new UserException($e->getMessage(), $e->getCode(), $e);
+                }
 
                 $strategy = new DatabaseMigrate(
                     $this->getLogger(),
@@ -80,17 +85,21 @@ class Component extends BaseComponent
 
     public function createReplicationsAction(): array
     {
-        $sourceConnection = new Connection([
-            'host' => $this->getConfig()->getSourceHost(),
-            'user' => $this->getConfig()->getSourceUser(),
-            'password' => $this->getConfig()->getSourcePassword(),
-        ]);
+        try {
+            $sourceConnection = new Connection([
+                'host' => $this->getConfig()->getSourceHost(),
+                'user' => $this->getConfig()->getSourceUser(),
+                'password' => $this->getConfig()->getSourcePassword(),
+            ]);
 
-        $targetConnection = new Connection([
-            'host' => $this->getConfig()->getTargetHost(),
-            'user' => $this->getConfig()->getTargetUser(),
-            'password' => $this->getConfig()->getTargetPassword(),
-        ]);
+            $targetConnection = new Connection([
+                'host' => $this->getConfig()->getTargetHost(),
+                'user' => $this->getConfig()->getTargetUser(),
+                'password' => $this->getConfig()->getTargetPassword(),
+            ]);
+        } catch (SnowflakeDbAdapterException $e) {
+            throw new UserException($e->getMessage(), $e->getCode(), $e);
+        }
 
         $strategy = new DatabaseReplication(
             $this->getLogger(),

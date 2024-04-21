@@ -20,6 +20,14 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->scalarNode('sourceKbcUrl')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('#sourceKbcToken')->isRequired()->cannotBeEmpty()->end()
                 ->arrayNode('tables')->prototype('scalar')->end()->end()
+                ->arrayNode('db')
+                    ->children()
+                        ->scalarNode('host')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('username')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('#password')->isRequired()->cannotBeEmpty()->end()
+                        ->scalarNode('warehouse')->isRequired()->cannotBeEmpty()->end()
+                    ->end()
+                ->end()
             ->end()
         ;
         // @formatter:on
