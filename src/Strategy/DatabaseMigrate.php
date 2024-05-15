@@ -47,6 +47,18 @@ class DatabaseMigrate implements MigrateInterface
         $this->targetConnection->grantRoleToMigrateUser($databaseRole);
         $this->targetConnection->useRole($databaseRole);
 
+        $hasDynamicBackend = in_array(
+            'workspace-snowflake-dynamic-backend-size',
+            $this->targetSapiClient->verifyToken()['owner']['features'],
+        );
+
+        if ($hasDynamicBackend) {
+            $this->targetConnection->query(sprintf(
+                'USE WAREHOUSE %s',
+                QueryBuilder::quoteIdentifier($config->getTargetWarehouse() . '_SMALL'),
+            ));
+        }
+
         $this->targetConnection->query(sprintf(
             'USE DATABASE %s;',
             QueryBuilder::quoteIdentifier($this->targetDatabase),
