@@ -2,24 +2,156 @@
 
 declare(strict_types=1);
 
-namespace AppProjectMigrateLargeTables;
+namespace Keboola\AppProjectMigrateLargeTables;
 
 use Keboola\Component\Config\BaseConfig;
 
 class Config extends BaseConfig
 {
+    private const STACK_DATABASES = [
+        'connection.keboola.com' => [
+            'db_replica_prefix' => 'AWSUS',
+            'db_prefix' => 'SAPI',
+            'account' => 'KEBOOLA',
+            'region' => 'AWS_US_WEST_2',
+        ],
+        'connection.eu-central-1.keboola.com' => [
+            'db_replica_prefix' => 'AWSEU',
+            'db_prefix' => 'KEBOOLA',
+            'account' => 'KEBOOLA',
+            'region' => 'AWS_EU_CENTRAL_1',
+        ],
+        'connection.north-europe.azure.keboola.com' => [
+            'db_replica_prefix' => 'AZNE',
+            'db_prefix' => 'KEBOOLA',
+            'account' => 'KEBOOLA',
+            'region' => 'AZURE_WESTEUROPE',
+        ],
+        'connection.europe-west3.gcp.keboola.com' => [
+            'db_replica_prefix' => 'GCPEUW3',
+            'db_prefix' => 'KBC_EUW3',
+            'account' => 'IK34405',
+            'region' => 'GCP_EUROPE_WEST4',
+        ],
+        'connection.us-east4.gcp.keboola.com' => [
+            'db_replica_prefix' => 'GCPUSE4',
+            'db_prefix' => 'KBC_USE4',
+            'account' => 'NE35810',
+            'region' => 'GCP_US_EAST4',
+        ],
+    ];
+
+    public function getMode(): string
+    {
+        return $this->getStringValue(['parameters', 'mode']);
+    }
+
     public function getSourceKbcUrl(): string
     {
-        return $this->getValue(['parameters', 'sourceKbcUrl']);
+        return $this->getStringValue(['parameters', 'sourceKbcUrl']);
     }
 
     public function getSourceKbcToken(): string
     {
-        return $this->getValue(['parameters', '#sourceKbcToken']);
+        return $this->getStringValue(['parameters', '#sourceKbcToken']);
     }
 
     public function getMigrateTables(): array
     {
-        return $this->getValue(['parameters', 'tables']);
+        return $this->getArrayValue(['parameters', 'tables']);
+    }
+
+    public function getTargetHost(): string
+    {
+        return $this->getDbConfigNode()['host'];
+    }
+
+    public function getTargetUser(): string
+    {
+        return $this->getDbConfigNode()['username'];
+    }
+
+    public function getTargetPassword(): string
+    {
+        return $this->getDbConfigNode()['#password'];
+    }
+
+    public function getTargetWarehouse(): string
+    {
+        return $this->getDbConfigNode()['warehouse'];
+    }
+
+    public function getSourceDatabaseAccount(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['account'];
+    }
+
+    public function getSourceDatabaseRegion(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['region'];
+    }
+
+    public function getSourceDatabasePrefix(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['db_prefix'];
+    }
+
+    public function getReplicaDatabasePrefix(): string
+    {
+        $url = parse_url($this->getSourceKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['db_replica_prefix'];
+    }
+
+    public function getTargetDatabasePrefix(): string
+    {
+        $url = parse_url($this->getEnvKbcUrl());
+        assert($url && array_key_exists('host', $url));
+
+        return self::STACK_DATABASES[$url['host']]['db_prefix'];
+    }
+
+    public function getSourceHost(): string
+    {
+        return $this->getStringValue(['parameters', 'sourceHost']);
+    }
+
+    public function getSourceUser(): string
+    {
+        return $this->getStringValue(['parameters', 'sourceUsername']);
+    }
+
+    public function getSourcePassword(): string
+    {
+        return $this->getStringValue(['parameters', '#sourcePassword']);
+    }
+
+    public function getProjectIdFrom(): int
+    {
+        return $this->getIntValue(['parameters', 'projectIdFrom']);
+    }
+
+    public function getProjectIdTo(): int
+    {
+        return $this->getIntValue(['parameters', 'projectIdTo']);
+    }
+
+    private function getDbConfigNode(): array
+    {
+        $paramDb = $this->getArrayValue(['parameters', 'db'], []);
+        if ($paramDb) {
+            return $paramDb;
+        }
+        return $this->getImageParameters()['db'];
     }
 }

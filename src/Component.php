@@ -2,9 +2,17 @@
 
 declare(strict_types=1);
 
-namespace AppProjectMigrateLargeTables;
+namespace Keboola\AppProjectMigrateLargeTables;
 
+use Keboola\AppProjectMigrateLargeTables\Configuration\ConfigDefinition;
+use Keboola\AppProjectMigrateLargeTables\Configuration\CreateReplicationsConfigDefinition;
+use Keboola\AppProjectMigrateLargeTables\Snowflake\Connection;
+use Keboola\AppProjectMigrateLargeTables\Strategy\DatabaseMigrate;
+use Keboola\AppProjectMigrateLargeTables\Strategy\DatabaseReplication;
+use Keboola\AppProjectMigrateLargeTables\Strategy\SapiMigrate;
 use Keboola\Component\BaseComponent;
+use Keboola\Component\UserException;
+use Keboola\SnowflakeDbAdapter\Exception\SnowflakeDbAdapterException;
 use Keboola\StorageApi\Client;
 
 class Component extends BaseComponent
@@ -16,14 +24,95 @@ class Component extends BaseComponent
             'token' => $this->getConfig()->getSourceKbcToken(),
         ]);
 
-        $destinationSapiClient = new Client([
-            'url' => (string) getenv('KBC_URL'),
-            'token' => (string) getenv('KBC_TOKEN'),
+        $targetSapiClient = new Client([
+            'url' => $this->getConfig()->getEnvKbcUrl(),
+            'token' => $this->getConfig()->getEnvKbcToken(),
         ]);
+        switch ($this->getConfig()->getMode()) {
+            case 'sapi':
+                $strategy = new SapiMigrate(
+                    $sourceSapiClient,
+                    $targetSapiClient,
+                    $this->getLogger(),
+                );
+                break;
+            case 'database':
+                $verifyToken = $sourceSapiClient->verifyToken();
 
-        $app = new Application($sourceSapiClient, $destinationSapiClient, $this->getLogger());
+                $sourceDatabase = sprintf(
+                    '%s_%s',
+                    $this->getConfig()->getSourceDatabasePrefix(),
+                    $verifyToken['owner']['id'],
+                );
 
-        $app->run($this->getConfig()->getMigrateTables());
+                $replicaDatabase = sprintf(
+                    '%s_%s_REPLICA',
+                    $this->getConfig()->getReplicaDatabasePrefix(),
+                    $verifyToken['owner']['id'],
+                );
+                $targetDatabase = sprintf(
+                    '%s_%s',
+                    $this->getConfig()->getTargetDatabasePrefix(),
+                    $targetSapiClient->verifyToken()['owner']['id'],
+                );
+
+                try {
+                    $targetConnection = new Connection([
+                        'host' => $this->getConfig()->getTargetHost(),
+                        'user' => $this->getConfig()->getTargetUser(),
+                        'password' => $this->getConfig()->getTargetPassword(),
+                        'database' => $targetDatabase,
+                    ]);
+                } catch (SnowflakeDbAdapterException $e) {
+                    throw new UserException($e->getMessage(), $e->getCode(), $e);
+                }
+
+                $strategy = new DatabaseMigrate(
+                    $this->getLogger(),
+                    $targetConnection,
+                    $targetSapiClient,
+                    $sourceDatabase,
+                    $replicaDatabase,
+                    $targetDatabase,
+                );
+                break;
+            default:
+                throw new UserException(sprintf('Unknown mode "%s"', $this->getConfig()->getMode()));
+        }
+
+        $strategy->migrate($this->getConfig());
+    }
+
+    public function createReplicationsAction(): array
+    {
+        try {
+            $sourceConnection = new Connection([
+                'host' => $this->getConfig()->getSourceHost(),
+                'user' => $this->getConfig()->getSourceUser(),
+                'password' => $this->getConfig()->getSourcePassword(),
+            ]);
+
+            $targetConnection = new Connection([
+                'host' => $this->getConfig()->getTargetHost(),
+                'user' => $this->getConfig()->getTargetUser(),
+                'password' => $this->getConfig()->getTargetPassword(),
+            ]);
+        } catch (SnowflakeDbAdapterException $e) {
+            throw new UserException($e->getMessage(), $e->getCode(), $e);
+        }
+
+        $strategy = new DatabaseReplication(
+            $this->getLogger(),
+            $sourceConnection,
+            $targetConnection,
+        );
+        $strategy->createReplications(
+            $this->getConfig(),
+            $this->getConfig()->getProjectIdFrom(),
+            $this->getConfig()->getProjectIdTo(),
+        );
+
+        return ['status' => 'ok'];
     }
 
     public function getConfig(): Config
@@ -33,6 +122,13 @@ class Component extends BaseComponent
         return $config;
     }
 
+    protected function getSyncActions(): array
+    {
+        return [
+            'createReplications' => 'createReplicationsAction',
+        ];
+    }
+
     protected function getConfigClass(): string
     {
         return Config::class;
@@ -40,6 +136,13 @@ class Component extends BaseComponent
 
     protected function getConfigDefinitionClass(): string
     {
-        return ConfigDefinition::class;
+        $rawConfig = $this->getRawConfig();
+        $action = $rawConfig['action'] ?? 'run';
+        switch ($action) {
+            case 'createReplications':
+                return CreateReplicationsConfigDefinition::class;
+            default:
+                return ConfigDefinition::class;
+        }
     }
 }

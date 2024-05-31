@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace AppProjectMigrateLargeTables\FunctionalTests;
+namespace Keboola\AppProjectMigrateLargeTables\FunctionalTests;
 
 use Keboola\Csv\CsvFile;
 use Keboola\DatadirTests\DatadirTestCase;
@@ -57,7 +57,7 @@ class DatadirTest extends DatadirTestCase
 
             $tablesData = array_combine(
                 array_map(fn($v) => $v['id'], $tables),
-                array_map(fn($v) => $v['rowsCount'], $tables)
+                array_map(fn($v) => $v['rowsCount'], $tables),
             );
 
             if ($tablesData) {
@@ -80,7 +80,7 @@ class DatadirTest extends DatadirTestCase
         $this->cleanupProject($this->destinationClient);
     }
 
-    protected function runScript(string $datadirPath): Process
+    protected function runScript(string $datadirPath, ?string $runId = null): Process
     {
         $fs = new Filesystem();
 
@@ -88,7 +88,7 @@ class DatadirTest extends DatadirTestCase
         if (!$fs->exists($script)) {
             throw new DatadirTestsException(sprintf(
                 'Cannot open script file "%s"',
-                $script
+                $script,
             ));
         }
 
@@ -97,10 +97,12 @@ class DatadirTest extends DatadirTestCase
             $script,
         ];
         $runProcess = new Process($runCommand);
+        $defaultRunId = random_int(1000, 100000) . '.' . random_int(1000, 100000) . '.' . random_int(1000, 100000);
         $runProcess->setEnv([
             'KBC_DATADIR' => $datadirPath,
             'KBC_URL' => (string) getenv('DESTINATION_CLIENT_URL'),
             'KBC_TOKEN' => (string) getenv('DESTINATION_CLIENT_TOKEN'),
+            'KBC_RUNID' => $runId ?? $defaultRunId,
         ]);
         $runProcess->setTimeout(0.0);
         $runProcess->run();
