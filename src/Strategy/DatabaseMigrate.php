@@ -92,6 +92,7 @@ class DatabaseMigrate implements MigrateInterface
             $this->migrateTable($schemaName, $table['name']);
         }
 
+        $this->logger->info(sprintf('Refreshing table information in bucket %s', $schemaName));
         $this->targetSapiClient->refreshTableInformationInBucket($schemaName);
     }
 
