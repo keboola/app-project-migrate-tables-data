@@ -73,7 +73,13 @@ class Component extends BaseComponent
                 $strategy = new DatabaseMigrate(
                     $this->getLogger(),
                     $targetConnection,
-                    new BranchAwareClient($defaultBranch['id']),
+                    new BranchAwareClient(
+                        $defaultBranch['id'],
+                        [
+                            'url' => $this->getConfig()->getEnvKbcUrl(),
+                            'token' => $this->getConfig()->getEnvKbcToken(),
+                        ],
+                    ),
                     $sourceDatabase,
                     $replicaDatabase,
                     $targetDatabase,
