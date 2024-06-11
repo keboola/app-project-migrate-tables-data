@@ -13,7 +13,9 @@ use Keboola\AppProjectMigrateLargeTables\Strategy\SapiMigrate;
 use Keboola\Component\BaseComponent;
 use Keboola\Component\UserException;
 use Keboola\SnowflakeDbAdapter\Exception\SnowflakeDbAdapterException;
+use Keboola\StorageApi\BranchAwareClient;
 use Keboola\StorageApi\Client;
+use Keboola\StorageApi\DevBranches;
 
 class Component extends BaseComponent
 {
@@ -55,6 +57,7 @@ class Component extends BaseComponent
                     $this->getConfig()->getTargetDatabasePrefix(),
                     $targetSapiClient->verifyToken()['owner']['id'],
                 );
+                $defaultBranch = (new DevBranches($targetSapiClient))->getDefaultBranch();
 
                 try {
                     $targetConnection = new Connection([
@@ -70,7 +73,13 @@ class Component extends BaseComponent
                 $strategy = new DatabaseMigrate(
                     $this->getLogger(),
                     $targetConnection,
-                    $targetSapiClient,
+                    new BranchAwareClient(
+                        $defaultBranch['id'],
+                        [
+                            'url' => $this->getConfig()->getEnvKbcUrl(),
+                            'token' => $this->getConfig()->getEnvKbcToken(),
+                        ],
+                    ),
                     $sourceDatabase,
                     $replicaDatabase,
                     $targetDatabase,

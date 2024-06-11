@@ -7,7 +7,6 @@ namespace Keboola\AppProjectMigrateLargeTables\Strategy;
 use Keboola\AppProjectMigrateLargeTables\Config;
 use Keboola\AppProjectMigrateLargeTables\MigrateInterface;
 use Keboola\AppProjectMigrateLargeTables\Snowflake\Connection;
-use Keboola\Csv\CsvFile;
 use Keboola\SnowflakeDbAdapter\Exception\RuntimeException;
 use Keboola\SnowflakeDbAdapter\QueryBuilder;
 use Keboola\StorageApi\Client;
@@ -92,6 +91,9 @@ class DatabaseMigrate implements MigrateInterface
             }
             $this->migrateTable($schemaName, $table['name']);
         }
+
+        $this->logger->info(sprintf('Refreshing table information in bucket %s', $schemaName));
+        $this->targetSapiClient->refreshTableInformationInBucket($schemaName);
     }
 
     private function migrateTable(string $schemaName, string $tableName): void
@@ -159,15 +161,6 @@ class DatabaseMigrate implements MigrateInterface
             ));
             return;
         }
-
-        $this->logger->info(sprintf('Refreshing table %s.%s metadata', $schemaName, $tableName));
-        $columns = array_filter($columns, fn($v) => $v !== '_timestamp');
-        $csv = $this->createDataFile($columns);
-        $tableId = sprintf('%s.%s', $schemaName, $tableName);
-        if (!$this->targetSapiClient->tableExists($tableId)) {
-            $this->logger->warning(sprintf('Table %s does not exist in Storage API', $tableId));
-        }
-        $this->targetSapiClient->writeTableAsync($tableId, $csv, ['incremental' => true]);
     }
 
     private function getSourceRole(Connection $connection, string $showGrantsOn, string $targetSourceName): string
@@ -182,13 +175,6 @@ class DatabaseMigrate implements MigrateInterface
         assert(count($ownershipOnDatabase) === 1);
 
         return current($ownershipOnDatabase)['grantee_name'];
-    }
-
-    private function createDataFile(array $columns): CsvFile
-    {
-        $csv = new CsvFile('/tmp/tempDataFile.csv');
-        $csv->writeRow($columns);
-        return $csv;
     }
 
     private function createReplicaDatabase(Config $config): void
