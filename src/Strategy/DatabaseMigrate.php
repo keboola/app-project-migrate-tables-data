@@ -71,6 +71,9 @@ class DatabaseMigrate implements MigrateInterface
             if (in_array($schema['name'], self::SKIP_CLONE_SCHEMAS, true)) {
                 continue;
             }
+            if (str_starts_with($schema['name'], 'WORKSPACE')) {
+                continue;
+            }
             $this->migrateSchema($config->getMigrateTables(), $schema['name']);
         }
         $this->dropReplicaDatabase();
