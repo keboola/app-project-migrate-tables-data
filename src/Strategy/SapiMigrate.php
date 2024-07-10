@@ -18,6 +18,7 @@ class SapiMigrate implements MigrateInterface
         private readonly Client $sourceClient,
         private readonly Client $targetClient,
         private readonly LoggerInterface $logger,
+        private readonly bool $dryRun = false,
     ) {
     }
 
@@ -70,27 +71,41 @@ class SapiMigrate implements MigrateInterface
             $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
             $slices = $this->sourceClient->downloadSlicedFile($sourceFileId, $tmp->getTmpFolder());
 
-            $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
-            $destinationFileId = $this->targetClient->uploadSlicedFile($slices, $optionUploadedFile);
+            if ($this->dryRun === false) {
+                $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
+                $destinationFileId = $this->targetClient->uploadSlicedFile($slices, $optionUploadedFile);
+            } else {
+                $this->logger->info(sprintf('[dry-run] Uploading table %s', $sourceTableInfo['id']));
+                $destinationFileId = null;
+            }
         } else {
             $fileName = $tmp->getTmpFolder() . '/' . $sourceFileInfo['name'];
 
             $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
             $this->sourceClient->downloadFile($sourceFileId, $fileName);
 
-            $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
-            $destinationFileId = $this->targetClient->uploadFile($fileName, $optionUploadedFile);
+            if ($this->dryRun === false) {
+                $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
+                $destinationFileId = $this->targetClient->uploadFile($fileName, $optionUploadedFile);
+            } else {
+                $this->logger->info(sprintf('[dry-run] Uploading table %s', $sourceTableInfo['id']));
+                $destinationFileId = null;
+            }
         }
 
-        // Upload data to table
-        $this->targetClient->writeTableAsyncDirect(
-            $sourceTableInfo['id'],
-            [
-                'name' => $sourceTableInfo['name'],
-                'dataFileId' => $destinationFileId,
-                'columns' => $sourceTableInfo['columns'],
-            ],
-        );
+        if ($this->dryRun === false) {
+            // Upload data to table
+            $this->targetClient->writeTableAsyncDirect(
+                $sourceTableInfo['id'],
+                [
+                    'name' => $sourceTableInfo['name'],
+                    'dataFileId' => $destinationFileId,
+                    'columns' => $sourceTableInfo['columns'],
+                ],
+            );
+        } else {
+            $this->logger->info(sprintf('[dry-run] Import data to table "%s"', $sourceTableInfo['name']));
+        }
     }
 
     private function getAllTables(): array
@@ -106,9 +121,9 @@ class SapiMigrate implements MigrateInterface
                 fn($v) => $v['rowsCount'] === 0 || is_null($v['rowsCount']),
             );
 
-            $listTables = array_merge(
-                array_map(fn($v) => $v['id'], $filteredBucketTables),
+            array_unshift(
                 $listTables,
+                ...array_map(fn($v) => $v['id'], $filteredBucketTables),
             );
         }
         return $listTables;

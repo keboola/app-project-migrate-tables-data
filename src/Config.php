@@ -154,4 +154,9 @@ class Config extends BaseConfig
         }
         return $this->getImageParameters()['db'];
     }
+
+    public function isDryRun(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'dryRun']);
+    }
 }

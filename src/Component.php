@@ -36,6 +36,7 @@ class Component extends BaseComponent
                     $sourceSapiClient,
                     $targetSapiClient,
                     $this->getLogger(),
+                    $this->getConfig()->isDryRun(),
                 );
                 break;
             case 'database':
@@ -83,6 +84,7 @@ class Component extends BaseComponent
                     $sourceDatabase,
                     $replicaDatabase,
                     $targetDatabase,
+                    $this->getConfig()->isDryRun(),
                 );
                 break;
             default:

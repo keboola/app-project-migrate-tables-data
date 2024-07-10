@@ -27,6 +27,7 @@ class DatabaseMigrate implements MigrateInterface
         private readonly string $sourceDatabase,
         private readonly string $replicaDatabase,
         private readonly string $targetDatabase,
+        private readonly bool $dryRun = false,
     ) {
     }
 
