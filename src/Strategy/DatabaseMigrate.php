@@ -27,6 +27,7 @@ class DatabaseMigrate implements MigrateInterface
         private readonly string $sourceDatabase,
         private readonly string $replicaDatabase,
         private readonly string $targetDatabase,
+        private readonly bool $dryRun = false,
     ) {
     }
 
@@ -95,12 +96,21 @@ class DatabaseMigrate implements MigrateInterface
             $this->migrateTable($schemaName, $table['name']);
         }
 
-        $this->logger->info(sprintf('Refreshing table information in bucket %s', $schemaName));
-        $this->targetSapiClient->refreshTableInformationInBucket($schemaName);
+        if ($this->dryRun === false) {
+            $this->logger->info(sprintf('Refreshing table information in bucket %s', $schemaName));
+            $this->targetSapiClient->refreshTableInformationInBucket($schemaName);
+        } else {
+            $this->logger->info(sprintf('[dry-run] Refreshing table information in bucket %s', $schemaName));
+        }
     }
 
     private function migrateTable(string $schemaName, string $tableName): void
     {
+        if ($this->dryRun) {
+            $this->logger->info(sprintf('[dry-run] Migrating table %s.%s', $schemaName, $tableName));
+            return;
+        }
+
         $this->logger->info(sprintf('Migrating table %s.%s', $schemaName, $tableName));
         $tableRole = $this->getSourceRole(
             $this->targetConnection,
