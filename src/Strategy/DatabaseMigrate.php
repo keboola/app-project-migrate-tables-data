@@ -94,7 +94,6 @@ class DatabaseMigrate implements MigrateInterface
             }
 
             $this->migrateSchema($config->getMigrateTables(), $schemaName);
-            exit();
         }
         $this->dropReplicaDatabase();
     }
