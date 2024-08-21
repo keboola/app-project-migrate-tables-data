@@ -41,8 +41,8 @@ class DatabaseReplication
         $this->sourceConnection->query(sprintf(
             'ALTER DATABASE %s ENABLE REPLICATION TO ACCOUNTS %s.%s;',
             QueryBuilder::quoteIdentifier($sourceDatabase),
-            $this->targetConnection->getRegion(),
-            $this->targetConnection->getAccount(),
+            QueryBuilder::quoteIdentifier($this->targetConnection->getRegion()),
+            QueryBuilder::quoteIdentifier($this->targetConnection->getAccount()),
         ));
     }
 }
