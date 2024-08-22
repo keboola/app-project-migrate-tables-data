@@ -8,6 +8,8 @@ use Keboola\Csv\CsvFile;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Exception as StorageApiException;
+use Keboola\StorageApi\Metadata;
+use Keboola\StorageApi\Options\Metadata\TableMetadataUpdateOptions;
 use Keboola\Temp\Temp;
 
 class StorageModifier
@@ -35,6 +37,8 @@ class StorageModifier
         } else {
             $this->createNonTypedTable($tableInfo);
         }
+
+        $this->restoreTableColumnsMetadata($tableInfo, $tableInfo['id'], new Metadata($this->client));
     }
 
     private function createNonTypedTable(array $tableInfo): void
@@ -118,5 +122,51 @@ class StorageModifier
             }
             throw $e;
         }
+    }
+
+    private function restoreTableColumnsMetadata(array $tableInfo, string $tableId, Metadata $metadataClient): void
+    {
+        $metadatas = [];
+        if (isset($tableInfo['metadata']) && count($tableInfo['metadata'])) {
+            foreach ($this->prepareMetadata($tableInfo['metadata']) as $provider => $metadata) {
+                $metadatas[$provider]['table'] = $metadata;
+            }
+        }
+        if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
+            foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
+                foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
+                    if ($metadata !== []) {
+                        $metadatas[$provider]['columns'][$column] = $metadata;
+                    }
+                }
+            }
+        }
+
+        /** @var array $metadata */
+        foreach ($metadatas as $provider => $metadata) {
+            if ($provider === 'storage') {
+                continue;
+            }
+            $tableMetadataUpdateOptions = new TableMetadataUpdateOptions(
+                $tableId,
+                (string) $provider,
+                $metadata['table'] ?? null,
+                $metadata['columns'] ?? null,
+            );
+
+            $metadataClient->postTableMetadataWithColumns($tableMetadataUpdateOptions);
+        }
+    }
+
+    private function prepareMetadata(array $rawMetadata): array
+    {
+        $result = [];
+        foreach ($rawMetadata as $item) {
+            $result[$item['provider']][] = [
+                'key' => $item['key'],
+                'value' => $item['value'],
+            ];
+        }
+        return $result;
     }
 }
