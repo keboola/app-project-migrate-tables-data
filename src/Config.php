@@ -11,7 +11,7 @@ class Config extends BaseConfig
     private const STACK_DATABASES = [
         'connection.keboola.com' => [
             'db_replica_prefix' => 'AWSUS',
-            'db_prefix' => 'SAPI',
+            'db_prefix' => 'sapi',
             'account' => 'KEBOOLA',
             'region' => 'AWS_US_WEST_2',
         ],
