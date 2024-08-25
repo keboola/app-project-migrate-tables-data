@@ -6,6 +6,7 @@ namespace Keboola\AppProjectMigrateLargeTables\Strategy;
 
 use Keboola\AppProjectMigrateLargeTables\Config;
 use Keboola\AppProjectMigrateLargeTables\MigrateInterface;
+use Keboola\AppProjectMigrateLargeTables\StorageModifier;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -14,11 +15,17 @@ use Psr\Log\LoggerInterface;
 
 class SapiMigrate implements MigrateInterface
 {
+    private StorageModifier $storageModifier;
+
+    /** @var string[] $bucketsExist */
+    private array $bucketsExist = [];
+
     public function __construct(
         private readonly Client $sourceClient,
         private readonly Client $targetClient,
         private readonly LoggerInterface $logger,
     ) {
+        $this->storageModifier = new StorageModifier($this->targetClient);
     }
 
     public function migrate(Config $config): void
@@ -42,6 +49,20 @@ class SapiMigrate implements MigrateInterface
             if ($tableInfo['isAlias']) {
                 $this->logger->warning(sprintf('Skipping table %s (alias)', $tableInfo['id']));
                 continue;
+            }
+
+            if (!in_array($tableInfo['bucket']['id'], $this->bucketsExist) &&
+                !$this->targetClient->bucketExists($tableInfo['bucket']['id'])) {
+                $this->logger->info(sprintf('Creating bucket %s', $tableInfo['bucket']['id']));
+                $this->bucketsExist[] = $tableInfo['bucket']['id'];
+
+                $this->storageModifier->createBucket($tableInfo['bucket']['id']);
+            }
+
+            if (!$this->targetClient->tableExists($tableId)) {
+                $this->logger->info(sprintf('Creating table %s', $tableInfo['id']));
+
+                $this->storageModifier->createTable($tableInfo);
             }
 
             $this->migrateTable($tableInfo);
@@ -95,15 +116,21 @@ class SapiMigrate implements MigrateInterface
 
     private function getAllTables(): array
     {
-        $buckets = $this->targetClient->listBuckets();
+        $buckets = $this->sourceClient->listBuckets();
         $listTables = [];
         foreach ($buckets as $bucket) {
-            $bucketTables = $this->targetClient->listTables($bucket['id']);
+            $sourceBucketTables = $this->sourceClient->listTables($bucket['id']);
+            $targetBucketTables = $this->targetClient->listTables($bucket['id']);
 
-            // migrate only empty tables
             $filteredBucketTables = array_filter(
-                $bucketTables,
-                fn($v) => $v['rowsCount'] === 0 || is_null($v['rowsCount']),
+                $sourceBucketTables,
+                function ($sourceTable) use ($targetBucketTables) {
+                    $v = current(array_filter(
+                        $targetBucketTables,
+                        fn($v) => $v['id'] === $sourceTable['id'],
+                    ));
+                    return empty($v) || $v['rowsCount'] === 0 || is_null($v['rowsCount']);
+                },
             );
 
             $listTables = array_merge(
