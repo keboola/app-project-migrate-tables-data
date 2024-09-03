@@ -64,6 +64,7 @@ class StorageModifier
             $columns[$column] = [];
         }
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
+            $columnName = strval($columnName);
             $columnMetadata = [];
             foreach ($column as $metadata) {
                 if ($metadata['provider'] !== 'storage') {
