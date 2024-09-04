@@ -74,6 +74,7 @@ class Component extends BaseComponent
                 $strategy = new DatabaseMigrate(
                     $this->getLogger(),
                     $targetConnection,
+                    $sourceSapiClient,
                     new BranchAwareClient(
                         $defaultBranch['id'],
                         [

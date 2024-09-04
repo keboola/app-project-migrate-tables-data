@@ -7,6 +7,7 @@ namespace Keboola\AppProjectMigrateLargeTables\Strategy;
 use Keboola\AppProjectMigrateLargeTables\Config;
 use Keboola\AppProjectMigrateLargeTables\MigrateInterface;
 use Keboola\AppProjectMigrateLargeTables\Snowflake\Connection;
+use Keboola\AppProjectMigrateLargeTables\StorageModifier;
 use Keboola\SnowflakeDbAdapter\Exception\RuntimeException;
 use Keboola\SnowflakeDbAdapter\QueryBuilder;
 use Keboola\StorageApi\Client;
@@ -19,16 +20,19 @@ class DatabaseMigrate implements MigrateInterface
         'INFORMATION_SCHEMA',
         'PUBLIC',
     ];
+    private StorageModifier $storageModifier;
 
     public function __construct(
         private readonly LoggerInterface $logger,
         private readonly Connection $targetConnection,
+        private readonly Client $sourceSapiClient,
         private readonly Client $targetSapiClient,
         private readonly string $sourceDatabase,
         private readonly string $replicaDatabase,
         private readonly string $targetDatabase,
         private readonly bool $dryRun = false,
     ) {
+        $this->storageModifier = new StorageModifier($this->targetSapiClient);
     }
 
     public function migrate(Config $config): void
@@ -63,19 +67,34 @@ class DatabaseMigrate implements MigrateInterface
             'USE DATABASE %s;',
             QueryBuilder::quoteIdentifier($this->targetDatabase),
         ));
+
+        $currentRole = $this->targetConnection->getCurrentRole();
+        $this->targetConnection->useRole('ACCOUNTADMIN');
         $schemas = $this->targetConnection->fetchAll(sprintf(
             'SHOW SCHEMAS IN DATABASE %s;',
-            QueryBuilder::quoteIdentifier($this->targetDatabase),
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
         ));
+        $this->targetConnection->useRole($currentRole);
 
         foreach ($schemas as $schema) {
-            if (in_array($schema['name'], self::SKIP_CLONE_SCHEMAS, true)) {
+            $schemaName = $schema['name'];
+            if (in_array($schemaName, self::SKIP_CLONE_SCHEMAS, true)) {
                 continue;
             }
-            if (str_starts_with($schema['name'], 'WORKSPACE')) {
+            if (str_starts_with($schemaName, 'WORKSPACE')) {
                 continue;
             }
-            $this->migrateSchema($config->getMigrateTables(), $schema['name']);
+
+            if (!$this->sourceSapiClient->bucketExists($schemaName)) {
+                continue;
+            }
+
+            if (!$this->targetSapiClient->bucketExists($schemaName)) {
+                $this->logger->info(sprintf('Creating bucket "%s".', $schemaName));
+                $this->storageModifier->createBucket($schemaName);
+            }
+
+            $this->migrateSchema($config->getMigrateTables(), $schemaName);
         }
         $this->dropReplicaDatabase();
     }
@@ -83,16 +102,27 @@ class DatabaseMigrate implements MigrateInterface
     private function migrateSchema(array $tablesWhiteList, string $schemaName): void
     {
         $this->logger->info(sprintf('Migrating schema %s', $schemaName));
+        $currentRole = $this->targetConnection->getCurrentRole();
+        $this->targetConnection->useRole('ACCOUNTADMIN');
         $tables = $this->targetConnection->fetchAll(sprintf(
-            'SHOW TABLES IN SCHEMA %s;',
+            'SHOW TABLES IN SCHEMA %s.%s;',
+            QueryBuilder::quoteIdentifier($this->replicaDatabase),
             QueryBuilder::quoteIdentifier($schemaName),
         ));
+        $this->targetConnection->useRole($currentRole);
 
         foreach ($tables as $table) {
             $tableId = sprintf('%s.%s', $schemaName, $table['name']);
             if ($tablesWhiteList && !in_array($tableId, $tablesWhiteList, true)) {
                 continue;
             }
+            if (!$this->targetSapiClient->tableExists($tableId)) {
+                $this->logger->info(sprintf('Creating table "%s".', $tableId));
+                $this->storageModifier->createTable(
+                    $this->sourceSapiClient->getTable($tableId),
+                );
+            }
+
             $this->migrateTable($schemaName, $table['name']);
         }
 
