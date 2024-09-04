@@ -43,8 +43,8 @@ class StorageModifier
 
     private function createNonTypedTable(array $tableInfo): void
     {
-        $headerFile = $this->tmp->createFile(sprintf('%s.header.csv', $tableInfo['id']));
-        $headerFile = new CsvFile($headerFile->getPathname());
+        $tempFile = $this->tmp->createFile(sprintf('%s.header.csv', $tableInfo['id']));
+        $headerFile = new CsvFile($tempFile->getPathname());
         $headerFile->writeRow($tableInfo['columns']);
 
         $this->client->createTableAsync(
@@ -64,7 +64,7 @@ class StorageModifier
             $columns[$column] = [];
         }
         foreach ($tableInfo['columnMetadata'] ?? [] as $columnName => $column) {
-            $columnName = strval($columnName);
+            $columnName = (string) $columnName;
             $columnMetadata = [];
             foreach ($column as $metadata) {
                 if ($metadata['provider'] !== 'storage') {
