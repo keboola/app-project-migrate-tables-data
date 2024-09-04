@@ -23,7 +23,7 @@ class StorageModifier
 
     public function createBucket(string $schemaName): void
     {
-        list($bucketStage, $bucketName) = explode('.', $schemaName);
+        [$bucketStage, $bucketName] = explode('.', $schemaName);
         if (str_starts_with($bucketName, 'c-')) {
             $bucketName = substr($bucketName, 2);
         }
