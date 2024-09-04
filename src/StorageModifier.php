@@ -133,12 +133,10 @@ class StorageModifier
                 $metadatas[$provider]['table'] = $metadata;
             }
         }
-        if (isset($tableInfo['columnMetadata']) && count($tableInfo['columnMetadata'])) {
-            foreach ($tableInfo['columnMetadata'] as $column => $columnMetadata) {
-                foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
-                    if ($metadata !== []) {
-                        $metadatas[$provider]['columns'][$column] = $metadata;
-                    }
+        foreach ($tableInfo['columnMetadata'] ?? [] as $column => $columnMetadata) {
+            foreach ($this->prepareMetadata($columnMetadata) as $provider => $metadata) {
+                if ($metadata !== []) {
+                    $metadatas[$provider]['columns'][$column] = $metadata;
                 }
             }
         }
