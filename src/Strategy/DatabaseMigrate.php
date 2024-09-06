@@ -90,8 +90,13 @@ class DatabaseMigrate implements MigrateInterface
             }
 
             if (!$this->targetSapiClient->bucketExists($schemaName)) {
-                $this->logger->info(sprintf('Creating bucket "%s".', $schemaName));
-                $this->storageModifier->createBucket($schemaName);
+                if ($this->dryRun) {
+                    $this->logger->info(sprintf('[dry-run] Creating bucket "%s".', $schemaName));
+                } else {
+                    // Create bucket
+                    $this->logger->info(sprintf('Creating bucket "%s".', $schemaName));
+                    $this->storageModifier->createBucket($schemaName);
+                }
             }
 
             $this->migrateSchema($config->getMigrateTables(), $schemaName);
@@ -116,6 +121,12 @@ class DatabaseMigrate implements MigrateInterface
             if ($tablesWhiteList && !in_array($tableId, $tablesWhiteList, true)) {
                 continue;
             }
+
+            if ($this->dryRun) {
+                $this->logger->info(sprintf('[dry-run] Migrating table %s.%s', $schemaName, $table['name']));
+                continue;
+            }
+
             if (!$this->targetSapiClient->tableExists($tableId)) {
                 $this->logger->info(sprintf('Creating table "%s".', $tableId));
                 $this->storageModifier->createTable(
@@ -136,11 +147,6 @@ class DatabaseMigrate implements MigrateInterface
 
     private function migrateTable(string $schemaName, string $tableName): void
     {
-        if ($this->dryRun) {
-            $this->logger->info(sprintf('[dry-run] Migrating table %s.%s', $schemaName, $tableName));
-            return;
-        }
-
         $this->logger->info(sprintf('Migrating table %s.%s', $schemaName, $tableName));
         $tableRole = $this->getSourceRole(
             $this->targetConnection,

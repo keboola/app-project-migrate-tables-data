@@ -54,16 +54,23 @@ class SapiMigrate implements MigrateInterface
 
             if (!in_array($tableInfo['bucket']['id'], $this->bucketsExist) &&
                 !$this->targetClient->bucketExists($tableInfo['bucket']['id'])) {
-                $this->logger->info(sprintf('Creating bucket %s', $tableInfo['bucket']['id']));
-                $this->bucketsExist[] = $tableInfo['bucket']['id'];
+                if ($this->dryRun) {
+                    $this->logger->info(sprintf('[dry-run] Creating bucket %s', $tableInfo['bucket']['id']));
+                } else {
+                    $this->logger->info(sprintf('Creating bucket %s', $tableInfo['bucket']['id']));
+                    $this->bucketsExist[] = $tableInfo['bucket']['id'];
 
-                $this->storageModifier->createBucket($tableInfo['bucket']['id']);
+                    $this->storageModifier->createBucket($tableInfo['bucket']['id']);
+                }
             }
 
             if (!$this->targetClient->tableExists($tableId)) {
-                $this->logger->info(sprintf('Creating table %s', $tableInfo['id']));
-
-                $this->storageModifier->createTable($tableInfo);
+                if ($this->dryRun) {
+                    $this->logger->info(sprintf('[dry-run] Creating table %s', $tableInfo['id']));
+                } else {
+                    $this->logger->info(sprintf('Creating table %s', $tableInfo['id']));
+                    $this->storageModifier->createTable($tableInfo);
+                }
             }
 
             $this->migrateTable($tableInfo);
