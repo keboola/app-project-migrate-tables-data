@@ -16,7 +16,7 @@ In Database mode, the application migrates data directly between databases. This
 - Both Snowflake accounts must be in the same organization.
 - The Snowflake user must have the `ACCOUNTADMIN` role.
 
-For allowing replication, run the following SQL in source Snowflake account:
+To enable replication, the source Snowflake account must first [allow replication](https://docs.snowflake.com/user-guide/account-replication-config#prerequisite-enable-replication-for-accounts-in-the-organization) and then execute the following SQL:
 ```sql
 ALTER DATABASE {{SOURCE_DATABASE_NAME}} ENABLE REPLICATION TO ACCOUNTS {{DESTINATION_ACCOUNT_REGION}}.{{DESTINATION_ACCOUNT_NAME}};
 ```
