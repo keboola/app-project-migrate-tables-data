@@ -203,11 +203,4 @@ class Config extends BaseConfig
     {
         return (bool) $this->getValue(['parameters',  'isSourceByodb']);
     }
-
-    public function getByodbSource(): array
-    {
-        $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-        assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
-        return self::BYODB_DATABASES[$sourceByodb];
-    }
 }
