@@ -19,6 +19,7 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->enumNode('mode')->values(['sapi', 'database'])->defaultValue('sapi')->end()
                 ->booleanNode('dryRun')->defaultFalse()->end()
                 ->booleanNode('isSourceByodb')->defaultFalse()->end()
+                ->scalarNode('sourceByodb')->end()
                 ->scalarNode('sourceKbcUrl')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('#sourceKbcToken')->isRequired()->cannotBeEmpty()->end()
                 ->arrayNode('tables')->prototype('scalar')->end()->end()

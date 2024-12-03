@@ -39,7 +39,7 @@ class Config extends BaseConfig
             'account' => 'NE35810',
             'region' => 'GCP_US_EAST4',
         ],
-        'coates.keboola.cloud' => [
+        'connection.coates.keboola.cloud' => [
             'db_replica_prefix' => 'COATESAWSUS',
             'db_prefix' => 'KBC_AWSUSE1',
             'account' => 'ALB08210',
@@ -98,6 +98,12 @@ class Config extends BaseConfig
 
     public function getSourceDatabaseAccount(): string
     {
+        if ($this->isSourceByodb()) {
+            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+
+            return self::BYODB_DATABASES[$sourceByodb]['account'];
+        }
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
@@ -106,6 +112,12 @@ class Config extends BaseConfig
 
     public function getSourceDatabaseRegion(): string
     {
+        if ($this->isSourceByodb()) {
+            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+
+            return self::BYODB_DATABASES[$sourceByodb]['region'];
+        }
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
@@ -114,6 +126,12 @@ class Config extends BaseConfig
 
     public function getSourceDatabasePrefix(): string
     {
+        if ($this->isSourceByodb()) {
+            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+
+            return self::BYODB_DATABASES[$sourceByodb]['db_prefix'];
+        }
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
@@ -122,7 +140,12 @@ class Config extends BaseConfig
 
     public function getReplicaDatabasePrefix(): string
     {
+        if ($this->isSourceByodb()) {
+            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
 
+            return self::BYODB_DATABASES[$sourceByodb]['db_replica_prefix'];
+        }
         $url = parse_url($this->getSourceKbcUrl());
         assert($url && array_key_exists('host', $url));
 
@@ -176,18 +199,15 @@ class Config extends BaseConfig
         return (bool) $this->getValue(['parameters', 'dryRun']);
     }
 
-    public function getIncludedWorkspaceSchemas(): array
+    public function isSourceByodb(): bool
     {
-        return $this->getArrayValue(['parameters', 'includeWorkspaceSchemas']);
+        return (bool) $this->getValue(['parameters',  'isSourceByodb']);
     }
 
-    public function getIncludedExternalSchemas(): array
+    public function getByodbSource(): array
     {
-        return $this->getArrayValue(['parameters', 'includeExternalSchemas']);
-    }
-
-    public function getByodbSource(): bool
-    {
-        return (bool) $this->getValue(['parameters', 'sourceByodb']);
+        $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
+        assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+        return self::BYODB_DATABASES[$sourceByodb];
     }
 }
