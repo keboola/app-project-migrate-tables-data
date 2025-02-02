@@ -230,15 +230,40 @@ class DatabaseMigrate implements MigrateInterface
     {
         // Migration database sqls
         $this->logger->info(sprintf('Creating replica database %s', $this->replicaDatabase));
-        $this->targetConnection->query(sprintf(
-            'CREATE DATABASE IF NOT EXISTS %s AS REPLICA OF %s.%s.%s;',
-            QueryBuilder::quoteIdentifier($this->replicaDatabase),
-            $config->getSourceDatabaseRegion(),
-            $config->getSourceDatabaseAccount(),
-            QueryBuilder::quoteIdentifier($this->sourceDatabase),
-        ));
 
-        $this->logger->info(sprintf('Replica database %s created', $this->replicaDatabase));
+        $databaseVariants = [
+            $this->sourceDatabase,
+            strtolower($this->sourceDatabase),
+        ];
+
+        $lastException = null;
+        foreach ($databaseVariants as $dbName) {
+            try {
+                $this->targetConnection->query(sprintf(
+                    'CREATE DATABASE IF NOT EXISTS %s AS REPLICA OF %s.%s.%s;',
+                    QueryBuilder::quoteIdentifier($this->replicaDatabase),
+                    $config->getSourceDatabaseRegion(),
+                    $config->getSourceDatabaseAccount(),
+                    QueryBuilder::quoteIdentifier($dbName),
+                ));
+
+                $this->logger->info(sprintf('Replica database %s created', $this->replicaDatabase));
+                return;
+            } catch (RuntimeException $e) {
+                $lastException = $e;
+                $this->logger->warning(sprintf(
+                    'Failed to create replica with database name %s: %s',
+                    $dbName,
+                    $e->getMessage(),
+                ));
+            }
+        }
+
+        throw new RuntimeException(
+            'Failed to create replica database with any database name variant',
+            0,
+            $lastException,
+        );
     }
 
     private function refreshReplicaDatabase(Config $config): void
