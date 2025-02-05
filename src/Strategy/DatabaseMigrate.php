@@ -87,12 +87,6 @@ class DatabaseMigrate implements MigrateInterface
                 continue;
             }
 
-            if (!$this->sourceSapiClient->bucketExists($schemaName)
-                && !in_array($schemaName, $config->getIncludedExternalSchemas())) {
-
-                continue;
-            }
-
             if (!$this->targetSapiClient->bucketExists($schemaName)) {
                 if ($this->dryRun) {
                     $this->logger->info(sprintf('[dry-run] Creating bucket "%s".', $schemaName));

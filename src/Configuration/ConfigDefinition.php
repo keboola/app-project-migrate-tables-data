@@ -23,7 +23,6 @@ class ConfigDefinition extends BaseConfigDefinition
                 ->scalarNode('sourceKbcUrl')->isRequired()->cannotBeEmpty()->end()
                 ->scalarNode('#sourceKbcToken')->isRequired()->cannotBeEmpty()->end()
                 ->arrayNode('includeWorkspaceSchemas')->prototype('scalar')->end()->end()
-                ->arrayNode('includeExternalSchemas')->prototype('scalar')->end()->end()
                 ->arrayNode('tables')->prototype('scalar')->end()->end()
                 ->arrayNode('db')
                     ->children()
