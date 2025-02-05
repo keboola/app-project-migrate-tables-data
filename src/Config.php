@@ -99,8 +99,8 @@ class Config extends BaseConfig
     public function getSourceDatabaseAccount(): string
     {
         if ($this->isSourceByodb()) {
-            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
+            $sourceByodb = $this->getStringValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['account'];
         }
@@ -113,8 +113,8 @@ class Config extends BaseConfig
     public function getSourceDatabaseRegion(): string
     {
         if ($this->isSourceByodb()) {
-            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
+            $sourceByodb = $this->getStringValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['region'];
         }
@@ -127,8 +127,8 @@ class Config extends BaseConfig
     public function getSourceDatabasePrefix(): string
     {
         if ($this->isSourceByodb()) {
-            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
+            $sourceByodb =  $this->getStringValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['db_prefix'];
         }
@@ -141,8 +141,8 @@ class Config extends BaseConfig
     public function getReplicaDatabasePrefix(): string
     {
         if ($this->isSourceByodb()) {
-            $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
+            $sourceByodb = $this->getStringValue(['parameters', 'sourceByodb']);
+            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['db_replica_prefix'];
         }
