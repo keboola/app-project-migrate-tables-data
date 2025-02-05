@@ -100,7 +100,7 @@ class Config extends BaseConfig
     {
         if ($this->isSourceByodb()) {
             $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['account'];
         }
@@ -114,7 +114,7 @@ class Config extends BaseConfig
     {
         if ($this->isSourceByodb()) {
             $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['region'];
         }
@@ -128,7 +128,7 @@ class Config extends BaseConfig
     {
         if ($this->isSourceByodb()) {
             $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['db_prefix'];
         }
@@ -142,7 +142,7 @@ class Config extends BaseConfig
     {
         if ($this->isSourceByodb()) {
             $sourceByodb = $this->getValue(['parameters', 'sourceByodb']);
-            assert(array_key_exists($sourceByodb, self::BYODB_DATABASES));
+            assert(array_key_exists((string) $sourceByodb, self::BYODB_DATABASES));
 
             return self::BYODB_DATABASES[$sourceByodb]['db_replica_prefix'];
         }
