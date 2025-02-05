@@ -83,7 +83,6 @@ class DatabaseMigrate implements MigrateInterface
             }
             if (str_starts_with($schemaName, 'WORKSPACE')
                 && !in_array($schemaName, $config->getIncludedWorkspaceSchemas())) {
-
                 continue;
             }
 
