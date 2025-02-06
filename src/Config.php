@@ -208,9 +208,4 @@ class Config extends BaseConfig
     {
         return $this->getArrayValue(['parameters', 'includeWorkspaceSchemas']);
     }
-
-    public function getIncludedExternalSchemas(): array
-    {
-        return $this->getArrayValue(['parameters', 'includeExternalSchemas']);
-    }
 }
