@@ -81,7 +81,7 @@ class DatabaseMigrate implements MigrateInterface
             if (in_array($schemaName, self::SKIP_CLONE_SCHEMAS, true)) {
                 continue;
             }
-            if (str_starts_with($schemaName, 'WORKSPACE')
+            if (preg_match('/^([0-9]*_)?WORKSPACE/', $schemaName)
                 && !in_array($schemaName, $config->getIncludedWorkspaceSchemas())) {
                 continue;
             }
