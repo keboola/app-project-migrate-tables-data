@@ -208,4 +208,9 @@ class Config extends BaseConfig
     {
         return $this->getArrayValue(['parameters', 'includeWorkspaceSchemas']);
     }
+
+    public function preserveTimestamp(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'preserveTimestamp']);
+    }
 }
