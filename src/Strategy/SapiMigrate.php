@@ -73,15 +73,16 @@ class SapiMigrate implements MigrateInterface
                 }
             }
 
-            $this->migrateTable($tableInfo);
+            $this->migrateTable($tableInfo, $config);
         }
     }
 
-    private function migrateTable(array $sourceTableInfo): void
+    private function migrateTable(array $sourceTableInfo, Config $config): void
     {
         $this->logger->info(sprintf('Exporting table %s', $sourceTableInfo['id']));
         $file = $this->sourceClient->exportTableAsync($sourceTableInfo['id'], [
             'gzip' => true,
+            'includeInternalTimestamp' => $config->preserveTimestamp(),
         ]);
 
         $sourceFileId = $file['file']['id'];
@@ -129,6 +130,7 @@ class SapiMigrate implements MigrateInterface
                     'name' => $sourceTableInfo['name'],
                     'dataFileId' => $destinationFileId,
                     'columns' => $sourceTableInfo['columns'],
+                    'useTimestampFromDataFile' => $config->preserveTimestamp(),
                 ],
             );
         } else {
