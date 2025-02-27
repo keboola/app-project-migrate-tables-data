@@ -136,6 +136,8 @@ class SapiMigrate implements MigrateInterface
         } else {
             $this->logger->info(sprintf('[dry-run] Import data to table "%s"', $sourceTableInfo['name']));
         }
+
+        $tmp->remove();
     }
 
     private function getAllTables(): array
