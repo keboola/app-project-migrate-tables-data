@@ -59,7 +59,11 @@ class DatabaseMigrate implements MigrateInterface
         if ($hasDynamicBackend) {
             $this->targetConnection->query(sprintf(
                 'USE WAREHOUSE %s',
-                QueryBuilder::quoteIdentifier($config->getTargetWarehouse() . '_SMALL'),
+                QueryBuilder::quoteIdentifier(sprintf(
+                    '%s_%s',
+                    $config->getTargetWarehouse(),
+                    $config->getTargetWarehouseSize(),
+                )),
             ));
         }
 
