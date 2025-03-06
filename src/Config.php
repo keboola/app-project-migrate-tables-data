@@ -98,7 +98,7 @@ class Config extends BaseConfig
 
     public function getTargetWarehouseSize(): string
     {
-        return $this->getDbConfigNode()['warehouse_size'];
+        return $this->getDbConfigNode()['warehouse_size'] ?? 'SMALL';
     }
 
     public function getSourceDatabaseAccount(): string
