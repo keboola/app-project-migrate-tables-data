@@ -218,4 +218,24 @@ class Config extends BaseConfig
     {
         return (bool) $this->getValue(['parameters', 'preserveTimestamp']);
     }
+
+    public function shouldCreateReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'create']);
+    }
+
+    public function shouldRefreshReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'refresh']);
+    }
+
+    public function shouldDropReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'drop']);
+    }
+
+    public function shouldMigrateData(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'migrateData']);
+    }
 }
