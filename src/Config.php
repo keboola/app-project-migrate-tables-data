@@ -221,21 +221,21 @@ class Config extends BaseConfig
 
     public function shouldCreateReplicaDatabase(): bool
     {
-        return (bool) $this->getValue(['parameters', 'replica', 'create']);
+        return (bool) $this->getValue(['parameters', 'replica', 'create'], true);
     }
 
     public function shouldRefreshReplicaDatabase(): bool
     {
-        return (bool) $this->getValue(['parameters', 'replica', 'refresh']);
+        return (bool) $this->getValue(['parameters', 'replica', 'refresh'], true);
     }
 
     public function shouldDropReplicaDatabase(): bool
     {
-        return (bool) $this->getValue(['parameters', 'replica', 'drop']);
+        return (bool) $this->getValue(['parameters', 'replica', 'drop'], true);
     }
 
     public function shouldMigrateData(): bool
     {
-        return (bool) $this->getValue(['parameters', 'migrateData']);
+        return (bool) $this->getValue(['parameters', 'migrateData'], true);
     }
 }
