@@ -98,7 +98,7 @@ class Config extends BaseConfig
 
     public function getTargetWarehouseSize(): string
     {
-        return $this->getDbConfigNode()['warehouse_size'];
+        return $this->getDbConfigNode()['warehouse_size'] ?? 'SMALL';
     }
 
     public function getSourceDatabaseAccount(): string
@@ -217,5 +217,25 @@ class Config extends BaseConfig
     public function preserveTimestamp(): bool
     {
         return (bool) $this->getValue(['parameters', 'preserveTimestamp']);
+    }
+
+    public function shouldCreateReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'create'], true);
+    }
+
+    public function shouldRefreshReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'refresh'], true);
+    }
+
+    public function shouldDropReplicaDatabase(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'replica', 'drop'], true);
+    }
+
+    public function shouldMigrateData(): bool
+    {
+        return (bool) $this->getValue(['parameters', 'migrateData'], true);
     }
 }

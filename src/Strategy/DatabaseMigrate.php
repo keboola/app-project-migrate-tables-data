@@ -39,10 +39,25 @@ class DatabaseMigrate implements MigrateInterface
     {
         $currentRole = $this->targetConnection->getCurrentRole();
         $this->targetConnection->useRole('ACCOUNTADMIN');
-        $this->createReplicaDatabase($config);
-        $this->refreshReplicaDatabase($config);
+        if ($config->shouldCreateReplicaDatabase()) {
+            $this->createReplicaDatabase($config);
+        }
+        if ($config->shouldRefreshReplicaDatabase()) {
+            $this->refreshReplicaDatabase($config);
+        }
         $this->targetConnection->useRole($currentRole);
 
+        if ($config->shouldMigrateData()) {
+            $this->migrateData($config);
+        }
+
+        if ($config->shouldDropReplicaDatabase()) {
+            $this->dropReplicaDatabase();
+        }
+    }
+
+    public function migrateData(Config $config): void
+    {
         $databaseRole = $this->getSourceRole(
             $this->targetConnection,
             'DATABASE',
@@ -102,7 +117,6 @@ class DatabaseMigrate implements MigrateInterface
 
             $this->migrateSchema($config->getMigrateTables(), $schemaName);
         }
-        $this->dropReplicaDatabase();
     }
 
     private function migrateSchema(array $tablesWhiteList, string $schemaName): void
