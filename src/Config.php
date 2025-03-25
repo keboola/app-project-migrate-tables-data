@@ -50,7 +50,7 @@ class Config extends BaseConfig
     private const BYODB_DATABASES = [
         'coates' => [
             'db_replica_prefix' => 'COATESAWSUS',
-            'db_prefix' => 'KEBOOLA',
+            'db_prefix' => 'SAPI',
             'account' => 'COATES',
             'region' => 'AWS_US_EAST_1',
         ],
