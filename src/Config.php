@@ -41,7 +41,7 @@ class Config extends BaseConfig
         ],
         'connection.coates.keboola.cloud' => [
             'db_replica_prefix' => 'COATESAWSUS',
-            'db_prefix' => 'KEBOOLA',
+            'db_prefix' => 'KBC',
             'account' => 'KEBOOLA',
             'region' => 'AWS_US_EAST_1',
         ],
