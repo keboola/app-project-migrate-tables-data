@@ -80,6 +80,9 @@ class SapiMigrate implements MigrateInterface
     private function migrateTable(array $sourceTableInfo, Config $config): void
     {
         $this->logger->info(sprintf('Exporting table %s', $sourceTableInfo['id']));
+        if ($config->preserveTimestamp()) {
+            $this->logger->info('Including internal _timestamp column');
+        }
         $file = $this->sourceClient->exportTableAsync($sourceTableInfo['id'], [
             'gzip' => true,
             'includeInternalTimestamp' => $config->preserveTimestamp(),
@@ -124,6 +127,9 @@ class SapiMigrate implements MigrateInterface
 
         if ($this->dryRun === false) {
             // Upload data to table
+            if ($config->preserveTimestamp()) {
+                $this->logger->info('Preserving _timestamp column');
+            }
             $this->targetClient->writeTableAsyncDirect(
                 $sourceTableInfo['id'],
                 [
