@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "d3cdb1b41c5d1af8168dbdd952483dcb",
+    "content-hash": "2190f10b2bc3519c47b72d02c1f0970b",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1372,16 +1372,16 @@
         },
         {
             "name": "keboola/storage-api-client",
-            "version": "v17.0.0",
+            "version": "dev-ondra-refresh-gcs-credentials",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/storage-api-php-client.git",
-                "reference": "0da766ea2d08c8966e2bfc239370eb59aa320c05"
+                "reference": "3d58f705914053cdf63305e051a46d13c2d16d1c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/0da766ea2d08c8966e2bfc239370eb59aa320c05",
-                "reference": "0da766ea2d08c8966e2bfc239370eb59aa320c05",
+                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/3d58f705914053cdf63305e051a46d13c2d16d1c",
+                "reference": "3d58f705914053cdf63305e051a46d13c2d16d1c",
                 "shasum": ""
             },
             "require": {
@@ -1404,11 +1404,11 @@
                 "ext-pdo": "*",
                 "ext-pdo_pgsql": "*",
                 "keboola/coding-standard": "^15.0",
+                "keboola/kbc-manage-api-php-client": "^9.0",
                 "keboola/php-csv-db-import": "^6",
                 "keboola/phpunit-retry-annotations": "^0.5",
                 "keboola/retry": "^0.5.0",
-                "keboola/table-backend-utils": "^2.1",
-                "phpcompatibility/php-compatibility": "*",
+                "keboola/table-backend-utils": ">=2.9.0",
                 "phpstan/phpstan": "^1",
                 "phpstan/phpstan-phpunit": "^1.0",
                 "phpunit/phpunit": "^7.0|^8.0|^9.0",
@@ -1433,9 +1433,9 @@
             "homepage": "http://keboola.com",
             "support": {
                 "issues": "https://github.com/keboola/storage-api-php-client/issues",
-                "source": "https://github.com/keboola/storage-api-php-client/tree/v17.0.0"
+                "source": "https://github.com/keboola/storage-api-php-client/tree/ondra-refresh-gcs-credentials"
             },
-            "time": "2025-03-05T14:39:59+00:00"
+            "time": "2025-07-21T20:24:39+00:00"
         },
         {
             "name": "microsoft/azure-storage-blob",
@@ -5215,12 +5215,14 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "keboola/storage-api-client": 20
+    },
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "plugin-api-version": "2.6.0"
 }
