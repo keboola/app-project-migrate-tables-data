@@ -1376,12 +1376,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/storage-api-php-client.git",
-                "reference": "3d58f705914053cdf63305e051a46d13c2d16d1c"
+                "reference": "aeb9de229845a007ee884aca8663bf988656ad92"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/3d58f705914053cdf63305e051a46d13c2d16d1c",
-                "reference": "3d58f705914053cdf63305e051a46d13c2d16d1c",
+                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/aeb9de229845a007ee884aca8663bf988656ad92",
+                "reference": "aeb9de229845a007ee884aca8663bf988656ad92",
                 "shasum": ""
             },
             "require": {
@@ -1435,7 +1435,7 @@
                 "issues": "https://github.com/keboola/storage-api-php-client/issues",
                 "source": "https://github.com/keboola/storage-api-php-client/tree/ondra-refresh-gcs-credentials"
             },
-            "time": "2025-07-21T20:24:39+00:00"
+            "time": "2025-07-23T06:04:10+00:00"
         },
         {
             "name": "microsoft/azure-storage-blob",
@@ -5223,6 +5223,6 @@
     "platform": {
         "php": "^8.2"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "plugin-api-version": "2.6.0"
 }
