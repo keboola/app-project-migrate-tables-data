@@ -24,11 +24,13 @@ class Component extends BaseComponent
         $sourceSapiClient = new Client([
             'url' => $this->getConfig()->getSourceKbcUrl(),
             'token' => $this->getConfig()->getSourceKbcToken(),
+            'logger' => $this->getLogger(),
         ]);
 
         $targetSapiClient = new Client([
             'url' => $this->getConfig()->getEnvKbcUrl(),
             'token' => $this->getConfig()->getEnvKbcToken(),
+            'logger' => $this->getLogger(),
         ]);
         switch ($this->getConfig()->getMode()) {
             case 'sapi':
