@@ -6,7 +6,7 @@
         "php": "^8.2",
         "keboola/db-adapter-snowflake": "^1.4",
         "keboola/php-component": "^9.4",
-        "keboola/storage-api-client": "dev-ondra-refresh-gcs-credentials"
+        "keboola/storage-api-client": "^18.2"
     },
     "require-dev": {
         "cweagans/composer-patches": "^1.7",

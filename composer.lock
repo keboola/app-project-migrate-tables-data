@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "2190f10b2bc3519c47b72d02c1f0970b",
+    "content-hash": "caf0d0e8d2284759e7c2863c7c8b4dbe",
     "packages": [
         {
             "name": "aws/aws-crt-php",
@@ -1372,16 +1372,16 @@
         },
         {
             "name": "keboola/storage-api-client",
-            "version": "dev-ondra-refresh-gcs-credentials",
+            "version": "v18.2.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/keboola/storage-api-php-client.git",
-                "reference": "3c79996d63ed19e2b39985c5fb2f4a320cec69f4"
+                "reference": "5b7481ec92df9702c5a6868d30494e5cacf15694"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/3c79996d63ed19e2b39985c5fb2f4a320cec69f4",
-                "reference": "3c79996d63ed19e2b39985c5fb2f4a320cec69f4",
+                "url": "https://api.github.com/repos/keboola/storage-api-php-client/zipball/5b7481ec92df9702c5a6868d30494e5cacf15694",
+                "reference": "5b7481ec92df9702c5a6868d30494e5cacf15694",
                 "shasum": ""
             },
             "require": {
@@ -1433,9 +1433,9 @@
             "homepage": "http://keboola.com",
             "support": {
                 "issues": "https://github.com/keboola/storage-api-php-client/issues",
-                "source": "https://github.com/keboola/storage-api-php-client/tree/ondra-refresh-gcs-credentials"
+                "source": "https://github.com/keboola/storage-api-php-client/tree/v18.2.5"
             },
-            "time": "2025-07-23T12:32:07+00:00"
+            "time": "2025-07-16T20:31:48+00:00"
         },
         {
             "name": "microsoft/azure-storage-blob",
@@ -5215,9 +5215,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {
-        "keboola/storage-api-client": 20
-    },
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
