@@ -240,6 +240,7 @@ class SapiMigrate implements MigrateInterface
                     'dataFileId' => $destinationFileId,
                     'columns' => $tableInfo['columns'],
                     'useTimestampFromDataFile' => $preserveTimestamp,
+                    'incremental' => true,
                 ],
             );
 
