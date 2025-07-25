@@ -203,7 +203,7 @@ class SapiMigrate implements MigrateInterface
 
         /** @var array{"entries": string[]} $manifest */
         $manifest = Utils::jsonDecode($manifestObject, true);
-        $chunks = array_chunk((array) $manifest['entries'], 50);
+        $chunks = array_chunk((array) $manifest['entries'], 500);
 
         $optionUploadedFile = new FileUploadOptions();
         $optionUploadedFile
@@ -213,14 +213,13 @@ class SapiMigrate implements MigrateInterface
         ;
 
         foreach ($chunks as $chunkKey => $chunk) {
-            $this->logger->info(sprintf('Migrating %s chunk', $chunkKey));
+            $this->logger->info(sprintf('Processing %s/%s chunk', $chunkKey, count($chunks)));
             $slices = [];
             // refresh credentials for each chunk
             $gcsClient = $this->getGcsClient($fileId);
             $retBucket = $gcsClient->bucket($bucket);
             /** @var array{"url": string} $entry */
             foreach ($chunk as $entry) {
-                $this->logger->info(sprintf('Migrating %s file.', $entry['url']));
                 $slices[] = $destinationFile = $tmpFolder->getTmpFolder() . '/' . basename($entry['url']);
 
                 $sprintf = sprintf(
