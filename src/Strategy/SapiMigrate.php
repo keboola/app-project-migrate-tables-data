@@ -7,6 +7,7 @@ namespace Keboola\AppProjectMigrateLargeTables\Strategy;
 use Keboola\AppProjectMigrateLargeTables\Config;
 use Keboola\AppProjectMigrateLargeTables\MigrateInterface;
 use Keboola\AppProjectMigrateLargeTables\StorageModifier;
+use Keboola\AppProjectMigrateLargeTables\Strategy\SapiMigrate\MigrateGcsLargeTable;
 use Keboola\StorageApi\Client;
 use Keboola\StorageApi\ClientException;
 use Keboola\StorageApi\Options\FileUploadOptions;
@@ -15,7 +16,9 @@ use Psr\Log\LoggerInterface;
 
 class SapiMigrate implements MigrateInterface
 {
+    private const LARGE_GCS_TABLE_SIZE = 50*1000*1000*1000; // 50 GB
     private StorageModifier $storageModifier;
+    private MigrateGcsLargeTable $migrateGcsLargeTable;
 
     /** @var string[] $bucketsExist */
     private array $bucketsExist = [];
@@ -27,6 +30,12 @@ class SapiMigrate implements MigrateInterface
         private readonly bool $dryRun = false,
     ) {
         $this->storageModifier = new StorageModifier($this->targetClient);
+        $this->migrateGcsLargeTable = new MigrateGcsLargeTable(
+            $this->sourceClient,
+            $this->targetClient,
+            $this->logger,
+            $this->dryRun,
+        );
     }
 
     public function migrate(Config $config): void
@@ -94,26 +103,39 @@ class SapiMigrate implements MigrateInterface
             ->setFederationToken(true)
             ->setFileName($sourceTableInfo['id'])
         ;
-        if ($sourceFileInfo['isSliced'] === true) {
+        $tableSize = $sourceFileInfo['sizeBytes'];
+        if ($sourceFileInfo['provider'] === 'gcp' &&
+            $sourceFileInfo['isSliced'] === true &&
+            $tableSize > self::LARGE_GCS_TABLE_SIZE
+        ) {
+            $this->migrateGcsLargeTable->migrate(
+                $sourceFileId,
+                $sourceTableInfo,
+                $config->preserveTimestamp(),
+                $tmp,
+            );
+            $tmp->remove();
+            return;
+        } elseif ($sourceFileInfo['isSliced'] === true) {
             $optionUploadedFile->setIsSliced(true);
 
-            $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
-            $slices = $this->sourceClient->downloadSlicedFile($sourceFileId, $tmp->getTmpFolder());
-
             if ($this->dryRun === false) {
+                $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
+                $slices = $this->sourceClient->downloadSlicedFile($sourceFileId, $tmp->getTmpFolder());
+
                 $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
                 $destinationFileId = $this->targetClient->uploadSlicedFile($slices, $optionUploadedFile);
             } else {
-                $this->logger->info(sprintf('[dry-run] Uploading table %s', $sourceTableInfo['id']));
+                $this->logger->info(sprintf('[dry-run] Migrate table %s', $sourceTableInfo['id']));
                 $destinationFileId = null;
             }
         } else {
             $fileName = $tmp->getTmpFolder() . '/' . $sourceFileInfo['name'];
 
-            $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
-            $this->sourceClient->downloadFile($sourceFileId, $fileName);
-
             if ($this->dryRun === false) {
+                $this->logger->info(sprintf('Downloading table %s', $sourceTableInfo['id']));
+                $this->sourceClient->downloadFile($sourceFileId, $fileName);
+
                 $this->logger->info(sprintf('Uploading table %s', $sourceTableInfo['id']));
                 $destinationFileId = $this->targetClient->uploadFile($fileName, $optionUploadedFile);
             } else {
