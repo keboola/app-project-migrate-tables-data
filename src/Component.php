@@ -61,12 +61,18 @@ class Component extends BaseComponent
                 $defaultBranch = (new DevBranches($targetSapiClient))->getDefaultBranch();
 
                 try {
-                    $targetConnection = new Connection([
+                    $connectionConfig = [
                         'host' => $this->getConfig()->getTargetHost(),
                         'user' => $this->getConfig()->getTargetUser(),
-                        'password' => $this->getConfig()->getTargetPassword(),
                         'database' => $targetDatabase,
-                    ]);
+                    ];
+                    if ($this->getConfig()->getTargetPrivateKey()) {
+                        $connectionConfig['privateKey'] = $this->getConfig()->getTargetPrivateKey();
+                        $connectionConfig['password'] = '';
+                    } else {
+                        $connectionConfig['password'] = $this->getConfig()->getTargetPassword();
+                    }
+                    $targetConnection = new Connection($connectionConfig);
                 } catch (SnowflakeDbAdapterException $e) {
                     throw new UserException($e->getMessage(), $e->getCode(), $e);
                 }
@@ -98,17 +104,28 @@ class Component extends BaseComponent
     public function createReplicationsAction(): array
     {
         try {
-            $sourceConnection = new Connection([
+            $sourceConfig = [
                 'host' => $this->getConfig()->getSourceHost(),
                 'user' => $this->getConfig()->getSourceUser(),
-                'password' => $this->getConfig()->getSourcePassword(),
-            ]);
+            ];
+            if ($this->getConfig()->getSourcePrivateKey()) {
+                $sourceConfig['privateKey'] = $this->getConfig()->getSourcePrivateKey();
+            } else {
+                $sourceConfig['password'] = $this->getConfig()->getSourcePassword();
+            }
 
-            $targetConnection = new Connection([
+            $targetConfig = [
                 'host' => $this->getConfig()->getTargetHost(),
                 'user' => $this->getConfig()->getTargetUser(),
-                'password' => $this->getConfig()->getTargetPassword(),
-            ]);
+            ];
+            if ($this->getConfig()->getTargetPrivateKey()) {
+                $targetConfig['privateKey'] = $this->getConfig()->getTargetPrivateKey();
+            } else {
+                $targetConfig['password'] = $this->getConfig()->getTargetPassword();
+            }
+
+            $sourceConnection = new Connection($sourceConfig);
+            $targetConnection = new Connection($targetConfig);
         } catch (SnowflakeDbAdapterException $e) {
             throw new UserException($e->getMessage(), $e->getCode(), $e);
         }
