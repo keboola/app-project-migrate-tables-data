@@ -1,6 +1,6 @@
 {
-    "name": "keboola/my-component",
-    "description": "MyComponent description",
+    "name": "keboola/app-project-migrate-tables-data",
+    "description": "The application migrates table data from one project to another",
     "license": "MIT",
     "require": {
         "php": "^8.2",
