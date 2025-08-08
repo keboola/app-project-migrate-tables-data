@@ -16,6 +16,8 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class MigrateGcsLargeTable
 {
+    private const CHUNK_SIZE = 500;
+
     public function __construct(
         private readonly Client $sourceClient,
         private readonly Client $targetClient,
@@ -47,7 +49,7 @@ class MigrateGcsLargeTable
 
         /** @var array{"entries": string[]} $manifest */
         $manifest = Utils::jsonDecode($manifestObject, true);
-        $chunks = array_chunk((array) $manifest['entries'], 500);
+        $chunks = array_chunk((array) $manifest['entries'], self::CHUNK_SIZE);
 
         $optionUploadedFile = new FileUploadOptions();
         $optionUploadedFile
