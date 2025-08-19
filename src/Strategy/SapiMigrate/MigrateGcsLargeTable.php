@@ -59,7 +59,7 @@ class MigrateGcsLargeTable
         ;
 
         foreach ($chunks as $chunkKey => $chunk) {
-            $this->logger->info(sprintf('Processing %s/%s chunk', $chunkKey, count($chunks)));
+            $this->logger->info(sprintf('Processing %s/%s chunk', $chunkKey+1, count($chunks)));
             $slices = [];
             // refresh credentials for each chunk
             $gcsClient = $this->getGcsClient($fileId);
