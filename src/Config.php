@@ -91,6 +91,11 @@ class Config extends BaseConfig
         return $this->getDbConfigNode()['#password'];
     }
 
+    public function getTargetPrivateKey(): string
+    {
+        return $this->getDbConfigNode()['#privateKey'] ?? '';
+    }
+
     public function getTargetWarehouse(): string
     {
         return $this->getDbConfigNode()['warehouse'];
@@ -178,6 +183,11 @@ class Config extends BaseConfig
     public function getSourcePassword(): string
     {
         return $this->getStringValue(['parameters', '#sourcePassword']);
+    }
+
+    public function getSourcePrivateKey(): string
+    {
+        return $this->getStringValue(['parameters', '#sourcePrivateKey'] ?? '');
     }
 
     public function getProjectIdFrom(): int
