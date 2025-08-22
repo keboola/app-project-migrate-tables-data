@@ -187,7 +187,7 @@ class Config extends BaseConfig
 
     public function getSourcePrivateKey(): string
     {
-        return $this->getStringValue(['parameters', '#sourcePrivateKey'] ?? '');
+        return $this->getStringValue(['parameters', '#sourcePrivateKey'], '');
     }
 
     public function getProjectIdFrom(): int

@@ -114,8 +114,6 @@ class Component extends BaseComponent
                 $sourceOptions['private_key'] = $this->getConfig()->getSourcePrivateKey();
             }
 
-            $sourceConnection = new Connection($sourceOptions);
-
             $targetOptions = [
                 'host' => $this->getConfig()->getTargetHost(),
                 'user' => $this->getConfig()->getTargetUser(),
@@ -126,6 +124,7 @@ class Component extends BaseComponent
                 $targetOptions['private_key'] = $this->getConfig()->getTargetPrivateKey();
             }
 
+            $sourceConnection = new Connection($sourceOptions);
             $targetConnection = new Connection($targetOptions);
         } catch (SnowflakeDbAdapterException $e) {
             throw new UserException($e->getMessage(), $e->getCode(), $e);
